@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 const CATEGORIES = ['Rent', 'Salary', 'Electricity', 'Transport', 'Materials', 'Maintenance', 'Marketing', 'Other'];
 
@@ -20,6 +21,7 @@ export default function Expenses() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [form, setForm] = useState({ category: '', amount: 0, description: '', date: format(new Date(), 'yyyy-MM-dd') });
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const active = expenses.filter(e => !e.deleted_at);
 
@@ -51,9 +53,23 @@ export default function Expenses() {
         actions={(e: Expense) => (
           <div className="flex gap-1 justify-end">
             <Button variant="ghost" size="icon" onClick={() => openEdit(e)}><Pencil className="w-4 h-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={() => { deleteExpense(e.id); toast.success('Deleted'); }}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setDeleteId(e.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
           </div>
         )}
+      />
+
+      <ConfirmDialog 
+        open={!!deleteId}
+        onOpenChange={(v) => !v && setDeleteId(null)}
+        onConfirm={() => {
+          if (deleteId) {
+            deleteExpense(deleteId);
+            toast.success('Deleted');
+            setDeleteId(null);
+          }
+        }}
+        title="Delete Expense"
+        description="Are you sure you want to delete this expense record?"
       />
 
       <Dialog open={open} onOpenChange={setOpen}>

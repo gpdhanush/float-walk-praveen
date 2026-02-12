@@ -13,21 +13,49 @@ export default function Settings() {
     storeName: settings.storeName,
     address: settings.address,
     mobile: settings.mobile,
+    phone: settings.phone,
     email: settings.email,
     ownerName: settings.ownerName,
     gstPercent: settings.gstPercent,
     gstNumber: settings.gstNumber,
+    taxNumber: settings.taxNumber,
+    logoUrl: settings.logoUrl,
   });
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    settings.updateSettings(form);
-    toast.success('Settings saved');
+  // Update form when settings change
+  useEffect(() => {
+    setForm({
+      storeName: settings.storeName,
+      address: settings.address,
+      mobile: settings.mobile,
+      phone: settings.phone,
+      email: settings.email,
+      ownerName: settings.ownerName,
+      gstPercent: settings.gstPercent,
+      gstNumber: settings.gstNumber,
+      taxNumber: settings.taxNumber,
+      logoUrl: settings.logoUrl,
+    });
+  }, [settings]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await settings.updateSettings(form);
+      toast.success('Settings saved successfully');
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      toast.error('Failed to save settings');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">{t('store_settings', settings.language)}</h1>
-      <Card className="shadow-md max-w-2xl">
+      <Card className="shadow-md">
         <CardContent className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><Label>Store Name</Label><Input value={form.storeName} onChange={e => setForm({ ...form, storeName: e.target.value })} /></div>
@@ -39,10 +67,44 @@ export default function Settings() {
             <div className="space-y-2"><Label>Email</Label><Input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2"><Label>Phone</Label><Input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+            <div className="space-y-2"><Label>Tax Number</Label><Input value={form.taxNumber} onChange={e => setForm({ ...form, taxNumber: e.target.value })} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2"><Label>Default GST %</Label><Input type="number" value={form.gstPercent} onChange={e => setForm({ ...form, gstPercent: +e.target.value })} /></div>
             <div className="space-y-2"><Label>GST Number</Label><Input value={form.gstNumber} onChange={e => setForm({ ...form, gstNumber: e.target.value })} /></div>
           </div>
-          <Button onClick={handleSave}>{t('save', settings.language)}</Button>
+          <div className="space-y-2">
+            <Label>Store Logo</Label>
+            <div className="flex items-center gap-4">
+                {form.logoUrl && (
+                    <div className="w-20 h-20 rounded-lg overflow-hidden border">
+                        <img src={form.logoUrl} alt="Logo Preview" className="w-full h-full object-cover" />
+                    </div>
+                )}
+                <div className="flex-1">
+                    <Input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                    setForm({ ...form, logoUrl: reader.result as string });
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        }} 
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1">Recommended: Square image, max 1MB</p>
+                </div>
+                {form.logoUrl && <Button variant="ghost" size="sm" onClick={() => setForm({ ...form, logoUrl: '' })} className="text-destructive">Remove</Button>}
+            </div>
+          </div>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? 'Saving...' : t('save', settings.language)}
+          </Button>
         </CardContent>
       </Card>
     </div>

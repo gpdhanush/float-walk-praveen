@@ -12,18 +12,16 @@ import * as XLSX from 'xlsx';
 import { format, subDays } from 'date-fns';
 
 export default function Reports() {
-  const { invoices, expenses, purchases } = useDataStore();
+  const { invoices, expenses } = useDataStore();
   const { language } = useSettingsStore();
   const [from, setFrom] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [to, setTo] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const filteredInvoices = useMemo(() => invoices.filter(i => i.date >= from && i.date <= to), [invoices, from, to]);
   const filteredExpenses = useMemo(() => expenses.filter(e => !e.deleted_at && e.date >= from && e.date <= to), [expenses, from, to]);
-  const filteredPurchases = useMemo(() => purchases.filter(p => p.date >= from && p.date <= to), [purchases, from, to]);
 
   const totalSales = filteredInvoices.reduce((s, i) => s + i.grandTotal, 0);
   const totalExpenses = filteredExpenses.reduce((s, e) => s + e.amount, 0);
-  const totalPurchases = filteredPurchases.reduce((s, p) => s + (p.quantity * p.costPerUnit), 0);
 
   const exportData = (data: any[], name: string) => {
     const ws = XLSX.utils.json_to_sheet(data);
@@ -41,17 +39,15 @@ export default function Reports() {
         <div className="space-y-2"><Label>To</Label><Input type="date" value={to} onChange={e => setTo(e.target.value)} /></div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card className="shadow-md"><CardContent className="p-5"><p className="text-sm text-muted-foreground">Sales</p><p className="text-2xl font-bold font-display text-success">₹{totalSales.toLocaleString('en-IN')}</p></CardContent></Card>
         <Card className="shadow-md"><CardContent className="p-5"><p className="text-sm text-muted-foreground">Expenses</p><p className="text-2xl font-bold font-display text-destructive">₹{totalExpenses.toLocaleString('en-IN')}</p></CardContent></Card>
-        <Card className="shadow-md"><CardContent className="p-5"><p className="text-sm text-muted-foreground">Purchases</p><p className="text-2xl font-bold font-display text-info">₹{totalPurchases.toLocaleString('en-IN')}</p></CardContent></Card>
       </div>
 
       <Tabs defaultValue="sales">
         <TabsList>
           <TabsTrigger value="sales">Sales</TabsTrigger>
           <TabsTrigger value="expenses">Expenses</TabsTrigger>
-          <TabsTrigger value="purchases">Purchases</TabsTrigger>
         </TabsList>
         <TabsContent value="sales" className="mt-4">
           <div className="flex justify-end mb-2">
@@ -72,17 +68,6 @@ export default function Reports() {
             <table className="w-full text-sm">
               <thead><tr className="bg-muted/50 text-left"><th className="p-3">Category</th><th className="p-3 text-right">Amount</th><th className="p-3">Description</th><th className="p-3">Date</th></tr></thead>
               <tbody>{filteredExpenses.map(e => <tr key={e.id} className="border-t"><td className="p-3">{e.category}</td><td className="p-3 text-right">₹{e.amount.toLocaleString('en-IN')}</td><td className="p-3">{e.description}</td><td className="p-3">{e.date}</td></tr>)}</tbody>
-            </table>
-          </div>
-        </TabsContent>
-        <TabsContent value="purchases" className="mt-4">
-          <div className="flex justify-end mb-2">
-            <Button variant="outline" size="sm" onClick={() => exportData(filteredPurchases.map(p => ({ Supplier: p.supplier, Qty: p.quantity, Cost: p.costPerUnit, Total: p.quantity * p.costPerUnit, Date: p.date })), 'purchases')} className="gap-2"><Download className="w-4 h-4" />Export</Button>
-          </div>
-          <div className="rounded-xl border bg-card overflow-hidden">
-            <table className="w-full text-sm">
-              <thead><tr className="bg-muted/50 text-left"><th className="p-3">Supplier</th><th className="p-3 text-right">Qty</th><th className="p-3 text-right">Cost</th><th className="p-3 text-right">Total</th><th className="p-3">Date</th></tr></thead>
-              <tbody>{filteredPurchases.map(p => <tr key={p.id} className="border-t"><td className="p-3">{p.supplier}</td><td className="p-3 text-right">{p.quantity}</td><td className="p-3 text-right">₹{p.costPerUnit.toLocaleString('en-IN')}</td><td className="p-3 text-right">₹{(p.quantity * p.costPerUnit).toLocaleString('en-IN')}</td><td className="p-3">{p.date}</td></tr>)}</tbody>
             </table>
           </div>
         </TabsContent>
