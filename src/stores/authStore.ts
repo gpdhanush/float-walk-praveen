@@ -1,41 +1,49 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { api } from '@/services/api';
 
 export type Role = 'admin' | 'employee';
 
 export interface User {
   id: string;
-  username: string;
+  email: string;
   role: Role;
   name: string;
 }
 
 interface AuthState {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
-  login: (username: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
-
-const defaultUsers = [
-  { id: '1', username: 'admin', password: 'admin123', role: 'admin' as Role, name: 'Admin' },
-  { id: '2', username: 'employee', password: 'emp123', role: 'employee' as Role, name: 'Employee' },
-];
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      token: null,
       isAuthenticated: false,
-      login: (username, password) => {
-        const found = defaultUsers.find(u => u.username === username && u.password === password);
-        if (found) {
-          set({ user: { id: found.id, username: found.username, role: found.role, name: found.name }, isAuthenticated: true });
-          return true;
+      login: async (email, password) => {
+        try {
+          const res = await api.post('/auth/login', { email, password });
+          if (res.success && res.data) {
+             const { user, accessToken } = res.data;
+             const normalizedUser = { ...user, role: user.role.toLowerCase() };
+             set({ user: normalizedUser, token: accessToken, isAuthenticated: true });
+             
+             // Wait for localStorage to sync
+             await new Promise(resolve => setTimeout(resolve, 50));
+             return true;
+          }
+          return false;
+        } catch (e) {
+          console.error(e);
+          return false;
         }
-        return false;
       },
-      logout: () => set({ user: null, isAuthenticated: false }),
+      logout: () => set({ user: null, token: null, isAuthenticated: false }),
     }),
     { name: 'auth-store' }
   )

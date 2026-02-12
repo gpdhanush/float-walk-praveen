@@ -97,6 +97,9 @@
     --warning-foreground: 220 60% 8%;
     --info: 210 80% 52%;
     --info-foreground: 0 0% 100%;
+    
+    --chart-1: 221 83% 53%;
+    --chart-2: 0 84% 60%;
   }
 }
 
@@ -111,6 +114,22 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', sans-serif;
   }
+}
+
+/* Glassmorphism Styles */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  border-radius: 1rem;
+}
+
+.dark .glass-card {
+  background: rgba(30, 30, 46, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 @media print {

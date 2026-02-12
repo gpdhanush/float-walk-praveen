@@ -57,7 +57,6 @@ const translations: Record<string, Record<Language, string>> = {
   thank_you: { en: 'Thank you for your business!', ta: 'உங்கள் வணிகத்திற்கு நன்றி!' },
   computer_generated: { en: 'This is a computer generated invoice.', ta: 'இது கணினியால் உருவாக்கப்பட்ட விலைப்பட்டியல்.' },
   low_stock: { en: 'Low Stock', ta: 'குறைந்த கையிருப்பு' },
-  follow_up: { en: 'Follow-up Date', ta: 'தொடர் நாள்' },
   status: { en: 'Status', ta: 'நிலை' },
 };
 

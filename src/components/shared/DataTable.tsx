@@ -10,7 +10,7 @@ import * as XLSX from 'xlsx';
 interface Column<T> {
   key: string;
   header: string;
-  render?: (item: T) => React.ReactNode;
+  render?: (item: T, index: number) => React.ReactNode;
   sortable?: boolean;
 }
 
@@ -93,7 +93,7 @@ export function DataTable<T extends Record<string, any>>({
               <TableRow key={item.id || i} className="hover:bg-muted/30 transition-colors">
                 {columns.map(col => (
                   <TableCell key={col.key}>
-                    {col.render ? col.render(item) : String(item[col.key] ?? '')}
+                    {col.render ? col.render(item, page * perPage + i) : String(item[col.key] ?? '')}
                   </TableCell>
                 ))}
                 {actions && <TableCell className="text-right">{actions(item)}</TableCell>}

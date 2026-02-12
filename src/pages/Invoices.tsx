@@ -1,170 +1,122 @@
 import { useState } from 'react';
-import { useDataStore, Invoice, InvoiceItem } from '@/stores/dataStore';
+import { useDataStore, Invoice } from '@/stores/dataStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { t } from '@/lib/i18n';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Eye, Trash2 } from 'lucide-react';
+import { Plus, MoreVertical, Eye, Pencil, Trash2, Printer } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Invoices() {
-  const { invoices, customers, products, addInvoice } = useDataStore();
-  const { language, gstPercent } = useSettingsStore();
+  const { invoices, deleteInvoice } = useDataStore();
+  const { language } = useSettingsStore();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  const activeCustomers = customers.filter(c => !c.deleted_at);
-  const activeProducts = products.filter(p => !p.deleted_at);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const [customerId, setCustomerId] = useState('');
-  const [items, setItems] = useState<InvoiceItem[]>([]);
-  const [gst, setGst] = useState(gstPercent);
-  const [advancePaid, setAdvancePaid] = useState(0);
-  const [notes, setNotes] = useState('');
-
-  const addItem = () => setItems([...items, { productId: '', productName: '', quantity: 1, price: 0, total: 0 }]);
-
-  const updateItem = (idx: number, field: string, value: any) => {
-    const newItems = [...items];
-    const item = { ...newItems[idx], [field]: value };
-    if (field === 'productId') {
-      const prod = activeProducts.find(p => p.id === value);
-      if (prod) { item.productName = prod.name; item.price = prod.price; }
+  const handleDelete = () => {
+    if (deleteId) {
+      deleteInvoice(deleteId);
+      setDeleteId(null);
+      toast.success('Invoice deleted');
     }
-    item.total = item.quantity * item.price;
-    newItems[idx] = item;
-    setItems(newItems);
   };
 
-  const removeItem = (idx: number) => setItems(items.filter((_, i) => i !== idx));
-
-  const subtotal = items.reduce((s, i) => s + i.total, 0);
-  const gstAmount = subtotal * (gst / 100);
-  const grandTotal = subtotal + gstAmount;
-  const balanceDue = grandTotal - advancePaid;
-
-  const handleSave = () => {
-    if (!customerId || items.length === 0) { toast.error('Select customer and add items'); return; }
-    const customer = activeCustomers.find(c => c.id === customerId);
-    if (!customer) return;
-
-    const invNum = `INV-${String(invoices.length + 1).padStart(4, '0')}`;
-    const status = balanceDue <= 0 ? 'paid' : advancePaid > 0 ? 'partial' : 'pending';
-
-    const id = addInvoice({
-      invoiceNumber: invNum,
-      customerId,
-      customerName: customer.name,
-      customerMobile: customer.mobile,
-      customerAddress: customer.address,
-      items,
-      subtotal,
-      gstPercent: gst,
-      gstAmount,
-      grandTotal,
-      advancePaid,
-      balanceDue,
-      status: status as any,
-      payments: [],
-      notes,
-      date: format(new Date(), 'yyyy-MM-dd'),
-    });
-
-    toast.success('Invoice created');
-    setOpen(false);
-    navigate(`/invoice/${id}`);
+  // Format date as dd-MMM-yyyy
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = date.toLocaleString('en-US', { month: 'short' });
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
+
+  // Sort invoices by date in descending order (newest first)
+  const sortedInvoices = [...invoices].sort((a, b) => {
+    const dateA = new Date(a.created_at || a.date).getTime();
+    const dateB = new Date(b.created_at || b.date).getTime();
+    return dateB - dateA; // Descending order
+  });
 
   const columns = [
     { key: 'invoiceNumber', header: 'Invoice #' },
+    { 
+      key: 'created_at', 
+      header: t('date', language), 
+      render: (i: Invoice) => formatDate(i.created_at || i.date)
+    },
     { key: 'customerName', header: 'Customer' },
-    { key: 'grandTotal', header: t('total', language), render: (i: Invoice) => `₹${i.grandTotal.toLocaleString('en-IN')}` },
-    { key: 'balanceDue', header: t('balance', language), render: (i: Invoice) => `₹${i.balanceDue.toLocaleString('en-IN')}` },
+    { key: 'grandTotal', header: t('total', language), render: (i: Invoice) => `₹${Number(i.totalAmount || i.grandTotal || 0).toLocaleString('en-IN')}` },
+    { key: 'balanceDue', header: t('balance', language), render: (i: Invoice) => {
+      const total = Number(i.totalAmount || i.grandTotal || 0);
+      const paid = Number(i.paidAmount || i.advancePaid || 0);
+      return `₹${(total - paid).toLocaleString('en-IN')}`;
+    }},
     {
       key: 'status', header: t('status', language), render: (i: Invoice) => (
-        <Badge variant={i.status === 'paid' ? 'default' : i.status === 'partial' ? 'secondary' : 'destructive'}>
-          {i.status}
+        <Badge variant={
+          i.status === 'paid' ? 'default' : 
+          i.status === 'partial' ? 'secondary' : 
+          i.status === 'hold' ? 'outline' : 'destructive'
+        }>
+          {(i.status || 'pending').toUpperCase()}
         </Badge>
       )
     },
-    { key: 'date', header: t('date', language) },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">{t('invoices', language)}</h1>
-        <Button onClick={() => { setOpen(true); setItems([]); setCustomerId(''); setAdvancePaid(0); setGst(gstPercent); setNotes(''); }} className="gap-2">
+        <Button onClick={() => navigate('/invoices/new')} className="gap-2">
           <Plus className="w-4 h-4" />{t('new_invoice', language)}
         </Button>
       </div>
 
-      <DataTable data={invoices} columns={columns} searchKeys={['invoiceNumber', 'customerName']} exportFileName="invoices"
+      <DataTable data={sortedInvoices} columns={columns} searchKeys={['invoiceNumber', 'customerName']} exportFileName="invoices"
         actions={(inv: Invoice) => (
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/invoice/${inv.id}`)}><Eye className="w-4 h-4" /></Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => navigate(`/invoice/${inv.id}`)}>
+                <Eye className="w-4 h-4 mr-2" /> View
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate(`/invoices/edit/${inv.id}`)}>
+                <Pencil className="w-4 h-4 mr-2" /> Edit
+              </DropdownMenuItem>
+              {/* Print just navigates to view which has print, or we could open window.print() after nav? 
+                  User said "print only invoice content". The View page is best for this. */}
+              <DropdownMenuItem onClick={() => window.open(`/invoice/print/${inv.id}`, '_blank')}>
+                <Printer className="w-4 h-4 mr-2" /> Print
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteId(inv.id)}>
+                <Trash2 className="w-4 h-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       />
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-display">{t('new_invoice', language)}</DialogTitle></DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Customer *</Label>
-              <Select value={customerId} onValueChange={setCustomerId}>
-                <SelectTrigger><SelectValue placeholder="Select customer" /></SelectTrigger>
-                <SelectContent>{activeCustomers.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.mobile}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Items</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addItem}><Plus className="w-3 h-3 mr-1" /> Add Item</Button>
-              </div>
-              {items.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-4">
-                    <Select value={item.productId} onValueChange={v => updateItem(idx, 'productId', v)}>
-                      <SelectTrigger className="text-xs"><SelectValue placeholder="Product" /></SelectTrigger>
-                      <SelectContent>{activeProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-2"><Input type="number" placeholder="Qty" value={item.quantity} onChange={e => updateItem(idx, 'quantity', +e.target.value)} /></div>
-                  <div className="col-span-3"><Input type="number" placeholder="Price" value={item.price} onChange={e => updateItem(idx, 'price', +e.target.value)} /></div>
-                  <div className="col-span-2 text-sm font-medium">₹{item.total.toLocaleString('en-IN')}</div>
-                  <div className="col-span-1"><Button variant="ghost" size="icon" onClick={() => removeItem(idx)}><Trash2 className="w-3 h-3 text-destructive" /></Button></div>
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>GST %</Label><Input type="number" value={gst} onChange={e => setGst(+e.target.value)} /></div>
-              <div className="space-y-2"><Label>{t('advance', language)}</Label><Input type="number" value={advancePaid} onChange={e => setAdvancePaid(+e.target.value)} /></div>
-            </div>
-
-            <div className="rounded-lg bg-muted p-4 space-y-1 text-sm">
-              <div className="flex justify-between"><span>{t('subtotal', language)}</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
-              <div className="flex justify-between"><span>GST ({gst}%)</span><span>₹{gstAmount.toLocaleString('en-IN')}</span></div>
-              <div className="flex justify-between"><span>{t('advance', language)}</span><span className="text-destructive">-₹{advancePaid.toLocaleString('en-IN')}</span></div>
-              <div className="flex justify-between font-bold text-base border-t pt-2 mt-2"><span>{t('grand_total', language)}</span><span>₹{balanceDue.toLocaleString('en-IN')}</span></div>
-            </div>
-
-            <div className="space-y-2"><Label>{t('notes', language)}</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>{t('cancel', language)}</Button>
-            <Button onClick={handleSave}>Create Invoice</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDialog 
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Delete Invoice"
+        description="This action cannot be undone. This will permanently delete the invoice."
+      />
     </div>
   );
 }

@@ -1,46 +1,144 @@
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useDataStore } from '@/stores/dataStore';
+import { useDataStore, Invoice } from '@/stores/dataStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { t } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
-import { Printer, Download, MessageCircle, ArrowLeft } from 'lucide-react';
+import { Printer, Download, MessageCircle, ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { InvoicePrintContent } from '@/components/shared/InvoicePrintContent';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { toast } from 'sonner';
 
 export default function InvoiceView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { invoices } = useDataStore();
+  const { invoices, fetchInvoice, deleteInvoice } = useDataStore();
   const settings = useSettingsStore();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  
   const inv = invoices.find(i => i.id === id);
+
+  useEffect(() => {
+    if (id && (!inv || !inv.items)) {
+      fetchInvoice(id);
+    }
+  }, [id, inv, fetchInvoice]);
+
+  const handleEdit = () => {
+    navigate(`/invoices/edit/${id}`);
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    try {
+      await deleteInvoice(id);
+      toast.success('Invoice deleted successfully');
+      navigate('/invoices');
+    } catch (error) {
+      console.error('Failed to delete invoice:', error);
+      toast.error('Failed to delete invoice');
+    }
+  };
 
   if (!inv) return <div className="p-8 text-center text-muted-foreground">Invoice not found</div>;
 
-  const formattedDate = (() => { try { return format(new Date(inv.date), 'dd-MMM-yyyy'); } catch { return inv.date; } })();
+  const formattedDate = (() => { try { return format(new Date(inv.date || (inv as any).createdAt), 'dd-MMM-yyyy'); } catch { return inv.date; } })();
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => window.open(`/invoice/print/${inv.id}`, '_blank');
 
   const handlePdf = async () => {
     const { default: html2canvas } = await import('html2canvas');
     const { default: jsPDF } = await import('jspdf');
     const el = document.getElementById('invoice-print');
     if (!el) return;
+    
+    // Generate timestamp in DD_MM_YYYY_HH_MM_SS format
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timestamp = `${day}_${month}_${year}_${hours}_${minutes}_${seconds}`;
+    
     const canvas = await html2canvas(el, { scale: 2 });
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' });
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 0, 0, 148, 210);
-    pdf.save(`${inv.invoiceNumber}.pdf`);
+    pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+    
+    // Filename format: Float_Walk_{InvoiceNumber}_DD_MM_YYYY_HH_MM_SS.pdf
+    pdf.save(`Float_Walk_${inv.invoiceNumber}_${timestamp}.pdf`);
   };
 
-  const handleWhatsApp = () => {
-    const msg = encodeURIComponent(
-      `${settings.storeName}\n` +
-      `Invoice: ${inv.invoiceNumber}\n` +
-      `Total: ₹${inv.grandTotal.toLocaleString('en-IN')}\n` +
-      `Advance: ₹${inv.advancePaid.toLocaleString('en-IN')}\n` +
-      `Balance: ₹${inv.balanceDue.toLocaleString('en-IN')}\n` +
-      `Date: ${formattedDate}`
-    );
-    window.open(`https://wa.me/?text=${msg}`, '_blank');
+  const handleWhatsApp = async () => {
+    if (!inv.customerMobile) {
+      toast.error('Customer mobile number not found');
+      return;
+    }
+
+    try {
+      toast.info('Downloading PDF and opening WhatsApp...');
+      
+      // Generate PDF first
+      const { default: html2canvas } = await import('html2canvas');
+      const { default: jsPDF } = await import('jspdf');
+      const el = document.getElementById('invoice-print');
+      if (!el) {
+        toast.error('Invoice content not found');
+        return;
+      }
+      
+      // Generate timestamp
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const timestamp = `${day}_${month}_${year}_${hours}_${minutes}_${seconds}`;
+      
+      const canvas = await html2canvas(el, { scale: 2 });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+      
+      // Download the PDF
+      const filename = `Float_Walk_${inv.invoiceNumber}_${timestamp}.pdf`;
+      pdf.save(filename);
+      
+      // Clean phone number (remove non-digits and add country code if needed)
+      let phoneNumber = inv.customerMobile.replace(/\D/g, '');
+      
+      // If number doesn't start with country code, add India code (91)
+      if (phoneNumber.length === 10) {
+        phoneNumber = '91' + phoneNumber;
+      }
+      
+      // Create WhatsApp message (without emojis for better compatibility)
+      const msg = encodeURIComponent(
+        `Hello ${inv.customerName},\n\n` +
+        `Here is your invoice from *${settings.storeName}*\n\n` +
+        `*Invoice Details:*\n` +
+        `Invoice Number: *${inv.invoiceNumber}*\n` +
+        `Date: ${formattedDate}\n` +
+        `Total Amount: Rs.${inv.grandTotal.toLocaleString('en-IN')}\n` +
+        `Paid: Rs.${inv.advancePaid.toLocaleString('en-IN')}\n` +
+        `Balance Due: Rs.${inv.balanceDue.toLocaleString('en-IN')}\n\n` +
+        `_The invoice PDF has been downloaded to your device. Please attach it to this chat and send._\n\n` +
+        `Thank you for your business!`
+      );
+      
+      // Open WhatsApp (works on both mobile app and web)
+      window.open(`https://wa.me/${phoneNumber}?text=${msg}`, '_blank');
+      
+      toast.success('PDF downloaded! Opening WhatsApp...');
+    } catch (error) {
+      console.error('WhatsApp share error:', error);
+      toast.error('Failed to process request');
+    }
   };
 
   return (
@@ -48,80 +146,27 @@ export default function InvoiceView() {
       <div className="flex items-center gap-2 no-print">
         <Button variant="ghost" size="icon" onClick={() => navigate('/invoices')}><ArrowLeft className="w-4 h-4" /></Button>
         <h1 className="font-display text-xl font-bold flex-1">{inv.invoiceNumber}</h1>
+        <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2"><Edit className="w-4 h-4" />Edit</Button>
+        <Button variant="outline" size="sm" onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" />Delete</Button>
+        <div className="h-6 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2"><Printer className="w-4 h-4" />{t('print', settings.language)}</Button>
         <Button variant="outline" size="sm" onClick={handlePdf} className="gap-2"><Download className="w-4 h-4" />{t('download_pdf', settings.language)}</Button>
         <Button variant="outline" size="sm" onClick={handleWhatsApp} className="gap-2"><MessageCircle className="w-4 h-4" />{t('share_whatsapp', settings.language)}</Button>
       </div>
 
-      <div id="invoice-print" className="bg-card border rounded-xl p-8 max-w-[148mm] mx-auto shadow-lg" style={{ minHeight: '210mm' }}>
-        {/* Header */}
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h2 className="font-display text-xl font-bold text-primary">{settings.storeName}</h2>
-            <p className="text-xs text-muted-foreground mt-1">{settings.address}</p>
-            <p className="text-xs text-muted-foreground">{settings.email} | {settings.mobile}</p>
-            {settings.gstNumber && <p className="text-xs text-muted-foreground">GST: {settings.gstNumber}</p>}
-          </div>
-          <div className="text-right">
-            <h3 className="font-display text-lg font-bold text-primary">INVOICE</h3>
-            <p className="text-sm font-semibold">{inv.invoiceNumber}</p>
-            <p className="text-xs text-muted-foreground">{formattedDate}</p>
-            <span className={`text-xs px-2 py-0.5 rounded-full mt-1 inline-block ${
-              inv.status === 'paid' ? 'bg-success/20 text-success' :
-              inv.status === 'partial' ? 'bg-warning/20 text-warning' :
-              'bg-destructive/20 text-destructive'
-            }`}>{inv.status.toUpperCase()}</span>
-          </div>
-        </div>
-
-        <div className="border-t border-primary/20 mb-4" />
-
-        {/* Bill To */}
-        <div className="mb-6">
-          <p className="text-xs text-muted-foreground mb-1">BILL TO</p>
-          <p className="font-semibold text-sm">{inv.customerName}</p>
-          <p className="text-xs text-muted-foreground">{inv.customerMobile}</p>
-          {inv.customerAddress && <p className="text-xs text-muted-foreground">{inv.customerAddress}</p>}
-        </div>
-
-        {/* Items Table */}
-        <table className="w-full text-xs mb-6">
-          <thead>
-            <tr className="bg-primary text-primary-foreground">
-              <th className="text-left p-2 rounded-tl-md">DESCRIPTION</th>
-              <th className="text-center p-2">QTY</th>
-              <th className="text-right p-2">PRICE</th>
-              <th className="text-right p-2 rounded-tr-md">TOTAL</th>
-            </tr>
-          </thead>
-          <tbody>
-            {inv.items.map((item, i) => (
-              <tr key={i} className="border-b border-border">
-                <td className="p-2">{item.productName}</td>
-                <td className="p-2 text-center">{item.quantity}</td>
-                <td className="p-2 text-right">₹{item.price.toLocaleString('en-IN')}</td>
-                <td className="p-2 text-right">₹{item.total.toLocaleString('en-IN')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Totals */}
-        <div className="ml-auto w-48 space-y-1 text-xs">
-          <div className="flex justify-between"><span>Subtotal</span><span>₹{inv.subtotal.toLocaleString('en-IN')}</span></div>
-          <div className="flex justify-between"><span>GST ({inv.gstPercent}%)</span><span>₹{inv.gstAmount.toLocaleString('en-IN')}</span></div>
-          {inv.advancePaid > 0 && <div className="flex justify-between text-destructive"><span>Advance</span><span>-₹{inv.advancePaid.toLocaleString('en-IN')}</span></div>}
-          <div className="flex justify-between font-bold text-sm border-t pt-2 text-primary">
-            <span>Grand Total</span><span>₹{inv.balanceDue.toLocaleString('en-IN')}</span>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-auto pt-8 border-t border-border text-center">
-          <p className="text-xs text-muted-foreground">{t('thank_you', settings.language)}</p>
-          <p className="text-[10px] text-muted-foreground/60">{t('computer_generated', settings.language)}</p>
-        </div>
+      <div className="bg-card border rounded-xl overflow-hidden shadow-lg max-w-[210mm] mx-auto">
+         <InvoicePrintContent invoice={inv} />
       </div>
+
+      <ConfirmDialog 
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDelete}
+        title="Delete Invoice"
+        description="Are you sure you want to delete this invoice? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="destructive"
+      />
     </div>
   );
 }
