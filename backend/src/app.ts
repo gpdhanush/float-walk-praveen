@@ -14,6 +14,9 @@ import { setupSwagger } from './config/swagger.js';
 export function createApp() {
   const app = express();
 
+  // Trust first proxy (e.g. cPanel / nginx) so X-Forwarded-For is used for rate limiting
+  app.set('trust proxy', 1);
+
   app.use(helmet({ 
     contentSecurityPolicy: false,
     crossOriginResourcePolicy: false, // Allow images to be loaded from frontend
