@@ -14,8 +14,8 @@ import { setupSwagger } from './config/swagger.js';
 export function createApp() {
   const app = express();
 
-  // Trust first proxy (e.g. cPanel / nginx) so X-Forwarded-For is used for rate limiting
-  app.set('trust proxy', 1);
+  // Trust proxies (cPanel/LiteSpeed) so X-Forwarded-For is used for rate limiting
+  app.set('trust proxy', true);
 
   app.use(helmet({ 
     contentSecurityPolicy: false,
