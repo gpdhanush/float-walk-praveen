@@ -16,4 +16,8 @@ if (!existsSync(distIndex)) {
   execSync('npm run build', { cwd: __dirname, stdio: 'inherit' });
 }
 
-await import(pathToFileURL(distIndex).href);
+// No top-level await: lsnode/cPanel loads this with require(), which cannot handle async ESM
+import(pathToFileURL(distIndex).href).catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
