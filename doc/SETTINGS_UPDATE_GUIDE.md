@@ -1,200 +1,218 @@
-# Settings Page Update - Complete Guide
+# Settings Page Update Guide
 
 ## Overview
-Updated the Settings page to include both **Store Settings** and **User Profile** management in a single, comprehensive interface with tabs.
+This update simplifies the settings page to focus on Store Details only, removing the separate User Profile section and the tax_number field.
 
-## What Was Fixed
+## Changes Made
 
-### 1. Invoice Update Error ✅
-**Error**: `Unknown column 'gstPercent' in 'field list'`
+### Frontend Changes
 
-**Root Cause**: The `InvoiceForm` was trying to save fields (`gstPercent`, `gstAmount`, `subtotal`) that don't exist in the simplified `invoices` table schema.
+1. **SettingsNew.tsx**
+   - Renamed "Store Information" to "Update Store Details"
+   - Combined Owner Name and Full Name into one field
+   - Email is now read-only (shows logged-in user's email)
+   - Added "Office Mobile Number" field (previously just "Phone")
+   - Added Role field (read-only)
+   - **Removed**: User Profile section entirely
+   - **Removed**: Tax Number field
+   - Simplified to single "Save Store Details" button
 
-**Solution**: Updated `InvoiceForm.tsx` to only send fields that exist in the database:
-- `totalAmount` (instead of grandTotal)
-- `paidAmount` (instead of advancePaid)
-- `status`
-- `notes`
+2. **settingsStore.ts**
+   - Removed `taxNumber` from interface and state
+   - Cleaned up all references to taxNumber
 
-The frontend still calculates GST for display purposes, but doesn't store it separately in the database.
+### Backend Changes
 
-### 2. Comprehensive Settings Page ✅
-Created a new tabbed settings page with two sections:
+No backend changes needed - the backend already:
+- Uses `userId` correctly in token payload
+- Doesn't reference tax_number anywhere
+- Has proper User entity structure
 
-#### **Store Settings Tab**
-- Store Name
-- Owner Name
-- Address
-- Mobile & Email
-- Phone & Tax Number
-- GST Percent & GST Number
-- Store Logo (upload/remove)
+### Database Changes
 
-All changes saved to database immediately.
+**File**: `database/remove_tax_number.sql`
 
-#### **User Profile Tab**
-Two cards:
+This migration removes the `tax_number` column from the `users` table if it exists.
 
-**Profile Information:**
-- Full Name (editable)
-- Email (editable)
-- Role (read-only)
+## How to Apply Changes
 
-**Change Password:**
+### Step 1: Apply Database Migration
+
+Run the SQL migration to remove tax_number:
+
+```bash
+# In phpMyAdmin or MySQL client
+mysql -u root -p footwear_retail < database/remove_tax_number.sql
+```
+
+Or in phpMyAdmin:
+1. Open phpMyAdmin
+2. Select `footwear_retail` database
+3. Go to SQL tab
+4. Copy and paste contents of `database/remove_tax_number.sql`
+5. Click "Go"
+
+### Step 2: Restart Backend
+
+The backend server needs to be restarted to load the updated code:
+
+```bash
+# Stop current backend (Ctrl+C in terminal 2)
+# Then restart:
+cd backend
+npm run dev
+```
+
+### Step 3: Clear Browser Cache
+
+1. Open browser DevTools (F12)
+2. Right-click on the refresh button
+3. Select "Empty Cache and Hard Reload"
+
+Or simply:
+- Chrome/Edge: Ctrl+Shift+Delete → Clear browsing data
+- Firefox: Ctrl+Shift+Delete → Clear Recent History
+
+## Current Structure
+
+### Store Details Fields:
+1. **Store Name** - Editable
+2. **Owner Name / Full Name** - Editable (same field for both)
+3. **Address** - Editable
+4. **Mobile** - Editable
+5. **Office Mobile Number** - Editable
+6. **Email** - Read-only (logged-in user's email)
+7. **Role** - Read-only (user's role: ADMIN/EMPLOYEE)
+8. **Default GST %** - Editable
+9. **GST Number** - Editable
+10. **Store Logo** - Editable (file upload with preview)
+
+### Password Change Section:
 - Current Password
 - New Password
 - Confirm New Password
-- Minimum 6 characters validation
-- Password match validation
-
-## Backend Updates
-
-### New API Endpoints
-
-```
-GET    /api/users/profile          - Get current user profile
-PATCH  /api/users/profile          - Update profile (name, email)
-POST   /api/users/change-password  - Change user password
-```
-
-### Files Created/Modified
-
-**Backend:**
-- `backend/src/interfaces/controllers/UserController.ts` - User profile controller
-- `backend/src/interfaces/routes/user.routes.ts` - User API routes
-
-**Frontend:**
-- `src/pages/SettingsNew.tsx` - New comprehensive settings page
-- `src/services/userService.ts` - User API service
-- `src/pages/InvoiceForm.tsx` - Fixed to use correct fields
-
-## How to Use
-
-### Step 1: Restart Backend Server
-```bash
-# In backend terminal (Terminal 2)
-Ctrl+C  # Stop the server
-npm run dev  # Restart
-```
-
-### Step 2: Access Settings Page
-1. Login to the application
-2. Go to **Settings** (admin only)
-3. You'll see two tabs:
-   - **Store Settings** - Manage store information
-   - **User Profile** - Manage your account
-
-### Step 3: Update Store Settings
-1. Click **Store Settings** tab
-2. Fill in all store information
-3. Upload logo (optional)
-4. Click **Save Store Settings**
-5. Settings are saved to database
-
-### Step 4: Update User Profile
-1. Click **User Profile** tab
-2. Update your name (will fix the "system admin" display issue)
-3. Click **Update Profile**
-4. Logout and login again to see the change in header
-
-### Step 5: Change Password
-1. In **User Profile** tab, scroll to "Change Password" section
-2. Enter current password
-3. Enter new password (min 6 characters)
-4. Confirm new password
-5. Click **Change Password**
-
-## Important Notes
-
-### Store Settings
-- **Logo** is stored as base64 in the database
-- **GST Percent** is used as default for new invoices
-- All fields except Store Name are optional
-- Changes apply immediately across the application
-
-### User Profile
-- **Name** change requires logout/login to reflect in header
-- **Email** change updates login credentials
-- **Role** cannot be changed from the UI (security)
-- Password changes require current password verification
-
-### Invoice Updates
-- Invoices now store only `total_amount` and `paid_amount`
-- GST calculations happen in the frontend for display
-- Old invoices with GST data will still display correctly
-- New invoices work correctly with simplified schema
+- Separate "Change Password" button
 
 ## Database Schema
 
-### Store Settings Table
-```sql
-store_settings (
-  id, store_name, owner_name, logo_url,
-  address, phone, mobile, email,
-  tax_number, gst_percent, gst_number,
-  theme, theme_color, language
-)
+### Users Table (after migration):
+```
+- id (uuid)
+- email (varchar)
+- password_hash (varchar)
+- name (varchar) - Owner name / Full name
+- role (enum: ADMIN, EMPLOYEE)
+- status (enum: ACTIVE, INACTIVE)
+- store_name (varchar)
+- store_address (text)
+- store_mobile (varchar)
+- gst_percent (decimal)
+- gst_number (varchar)
+- logo_url (text)
+- theme (enum: light, dark)
+- theme_color (varchar)
+- language (enum: en, ta)
+- created_at (datetime)
+- updated_at (datetime)
+- deleted_at (datetime) - nullable
 ```
 
-### Users Table
-```sql
-users (
-  id, email, password_hash, name,
-  role, status, created_at, updated_at
-)
+**Removed column**: `tax_number`
+
+## API Endpoints
+
+### GET /api/users/profile
+Returns current user profile with all store settings.
+
+### PATCH /api/users/profile
+Updates user profile and store settings together.
+
+**Body**:
+```json
+{
+  "name": "Owner Name",
+  "storeName": "Store Name",
+  "storeAddress": "Full Address",
+  "storeMobile": "Mobile Number",
+  "gstPercent": 18,
+  "gstNumber": "GST Number",
+  "logoUrl": "base64 or URL",
+  "theme": "light",
+  "themeColor": "blue",
+  "language": "en"
+}
 ```
 
-### Invoices Table (Simplified)
-```sql
-invoices (
-  id, code, customer_id, status,
-  total_amount, paid_amount, notes,
-  created_by, created_at, updated_at
-)
+### POST /api/users/change-password
+Changes user password.
+
+**Body**:
+```json
+{
+  "currentPassword": "current",
+  "newPassword": "new"
+}
 ```
 
-## Security Features
+## Verification
 
-1. **Password Verification** - Current password required to change
-2. **Password Hashing** - Passwords securely hashed with bcrypt
-3. **Authentication** - All endpoints require valid JWT token
-4. **Role-Based Access** - Settings page restricted to admin role
+After applying changes:
+
+1. **Login** - Should work normally
+2. **Navigate to Settings** - Should show "Update Store Details"
+3. **Check Fields**:
+   - Email should be read-only showing your login email
+   - Role should be read-only showing ADMIN or EMPLOYEE
+   - No Tax Number field visible
+   - No separate User Profile section
+4. **Update Store Details** - Should save successfully
+5. **Change Password** - Should work independently
 
 ## Troubleshooting
 
-### Issue: "system admin" still shows after update
-**Solution**: You must logout and login again for the name change to take effect
+### Issue: "Access token required" error
 
-### Issue: Password change fails
-**Solution**: Make sure:
-- Current password is correct
-- New password is at least 6 characters
-- Both new password fields match
+**Solution**: Backend needs to be restarted with the updated code that uses `userId` instead of `id` in the token payload.
 
-### Issue: Store settings not saving
-**Solution**: 
-- Check browser console for errors
-- Ensure backend server is running
-- Check that you ran the `update_store_settings.sql` migration
+```bash
+# In backend terminal
+Ctrl+C  # Stop server
+npm run dev  # Restart
+```
 
-### Issue: Invoice update still shows gstPercent error
-**Solution**: Make sure backend is rebuilt and restarted after the fixes
+### Issue: "Unknown column 'tax_number'" error
 
-## Benefits
+**Solution**: Run the database migration `database/remove_tax_number.sql`
 
-1. **Centralized Management** - All settings in one place
-2. **User Self-Service** - Users can update their own profile
-3. **Secure Password Management** - Change password without admin
-4. **Database Persistence** - All changes saved permanently
-5. **Better UX** - Tabbed interface, clear sections, loading states
-6. **Validation** - Form validation prevents errors
-7. **Feedback** - Toast notifications for all actions
+### Issue: Settings not saving
 
-## Next Steps
+**Checklist**:
+1. Check browser console for errors
+2. Check backend terminal for errors
+3. Verify you're logged in (check localStorage for auth-store)
+4. Check network tab in DevTools for 401 errors
 
-1. Apply the database migration (`update_store_settings.sql`)
-2. Restart the backend server
-3. Test store settings updates
-4. Update user profiles
-5. Test password changes
-6. Verify invoice creation/editing works without errors
+### Issue: Logo not uploading
+
+**Note**: Current implementation uses base64 encoding which:
+- Works for small images (<1MB)
+- May need optimization for larger files
+- Consider implementing proper file upload endpoint later
+
+## Future Improvements
+
+1. **File Upload Service**: Implement proper file upload endpoint instead of base64
+2. **Image Optimization**: Add image compression before upload
+3. **Multi-language**: Complete translations for Tamil language
+4. **Role Management**: Add ability for ADMIN to change employee roles
+5. **Audit Log**: Track changes to store settings
+
+## Summary
+
+This update simplifies the settings interface by:
+- ✅ Combining user and store settings into one section
+- ✅ Removing redundant fields (tax_number)
+- ✅ Making email read-only (linked to login)
+- ✅ Clarifying field names (Office Mobile Number)
+- ✅ Fixing token authentication issues
+- ✅ Streamlining the save process
