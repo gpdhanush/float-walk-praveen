@@ -12,12 +12,9 @@ Enterprise-grade Node.js backend for Retail Footwear Billing SaaS.
 - **UUID** primary keys
 - **Clean Architecture** (DDD-style)
 - **REST APIs**
-- **Redis** (caching + BullMQ)
-- **BullMQ** (job queue: email, WhatsApp, reminders, alerts)
 - **Winston** (logging)
 - **Joi** (validation)
 - **Swagger** (API docs)
-- **Docker** ready
 
 ## Project Structure
 
@@ -25,7 +22,7 @@ Enterprise-grade Node.js backend for Retail Footwear Billing SaaS.
 src/
   domain/           # Entities & repository interfaces
   application/      # Services & use-cases
-  infrastructure/   # DB, Redis, queues
+  infrastructure/   # DB
   interfaces/       # Controllers, routes, validators, middlewares
   config/
   utils/
@@ -38,7 +35,6 @@ src/
 
 - Node.js 20+
 - MySQL 8
-- Redis 7 (optional; see “Running without Redis” below)
 
 ### Environment
 
@@ -51,23 +47,8 @@ cp .env.example .env
 Required variables:
 
 - `MYSQL_*` – MySQL connection
-- `REDIS_*` – Redis connection (optional if `REDIS_ENABLED=false`)
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` (min 32 chars in production)
 - `CORS_ORIGINS` – Comma-separated allowed origins
-
-### Running without Redis
-
-For local development without Redis, set in `.env`:
-
-```bash
-REDIS_ENABLED=false
-```
-
-With Redis disabled:
-
-- Caching is skipped (cache reads return miss, writes no-op).
-- BullMQ workers are not started; email/WhatsApp/reminder/alert jobs are no-ops (enqueue calls succeed but nothing is processed).
-- The server starts without requiring a Redis instance and no connection errors are logged.
 
 ### Database
 
@@ -89,24 +70,6 @@ npm run dev
 - Swagger: http://localhost:3001/api-docs
 - Health: http://localhost:3001/health
 - Metrics: http://localhost:3001/metrics
-
-## Docker
-
-Run API + MySQL + Redis:
-
-```bash
-# Ensure MySQL is initialized (first run): run api once to trigger migration or run schema manually
-docker-compose up -d mysql redis
-# Then run migration from host if needed, or add init script to MySQL container
-docker-compose up -d api
-```
-
-For local dev with Docker only for MySQL/Redis:
-
-```bash
-docker-compose up -d mysql redis
-npm run dev
-```
 
 ## API Overview
 
@@ -149,7 +112,7 @@ Target: ≥70% coverage (unit + integration).
 
 ## Security
 
-- Helmet, CORS whitelist, rate limiting
+- Helmet, CORS whitelist
 - Parameterized queries (SQL injection prevention)
 - Password strength (min 8 chars, upper, lower, number, special)
 - XSS protection via Helmet and safe responses

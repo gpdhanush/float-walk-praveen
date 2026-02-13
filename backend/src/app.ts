@@ -2,7 +2,6 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import { config } from './config/index.js';
@@ -13,9 +12,6 @@ import { setupSwagger } from './config/swagger.js';
 
 export function createApp() {
   const app = express();
-
-  // Trust proxies (cPanel/LiteSpeed) so X-Forwarded-For is used for rate limiting
-  app.set('trust proxy', true);
 
   app.use(helmet({ 
     contentSecurityPolicy: false,
@@ -38,15 +34,6 @@ export function createApp() {
     res.header('Cross-Origin-Resource-Policy', 'cross-origin');
     next();
   }, express.static(path.join(process.cwd(), 'uploads')));
-  app.use(
-    rateLimit({
-      windowMs: config.rateLimit.windowMs,
-      max: config.rateLimit.max,
-      message: { success: false, code: 'RATE_LIMIT', message: 'Too many requests' },
-      // Avoid crash when behind proxy (cPanel/LiteSpeed) if trust proxy isn't applied yet
-      validate: { xForwardedForHeader: false },
-    })
-  );
   app.use(requestLogger);
 
   app.get('/health', (_req, res) => {

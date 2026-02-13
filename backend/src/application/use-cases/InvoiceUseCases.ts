@@ -6,7 +6,6 @@ import type {
 } from '../../domain/repositories/IInvoiceRepository.js';
 import { AppError, ErrorCodes } from '../../utils/errors.js';
 import type { CodeGeneratorService } from '../services/CodeGeneratorService.js';
-import { emailQueue, whatsappQueue } from '../../infrastructure/queues/setup.js';
 import { logger } from '../../utils/logger.js';
 
 export interface AddItemInput {
@@ -252,22 +251,13 @@ export class InvoiceUseCases {
   async sendInvoiceEmail(invoiceId: string, toEmail: string): Promise<void> {
     const { invoice, items } = await this.getWithItems(invoiceId);
     if (!invoice) throw new AppError(ErrorCodes.NOT_FOUND, 'Invoice not found', 404);
-    await emailQueue.add('invoice', {
-      to: toEmail,
-      subject: `Invoice ${invoice.code}`,
-      body: `Invoice ${invoice.code} total: ${invoice.totalAmount}. Items: ${items.length}.`,
-    });
-    logger.info('Invoice email queued', { invoiceId, to: toEmail });
+    logger.info('Invoice email (no-op): would send', { invoiceId, to: toEmail, code: invoice.code, total: invoice.totalAmount, itemsCount: items.length });
   }
 
   async sendInvoiceWhatsApp(invoiceId: string, toMobile: string): Promise<void> {
     const { invoice } = await this.getWithItems(invoiceId);
     if (!invoice) throw new AppError(ErrorCodes.NOT_FOUND, 'Invoice not found', 404);
-    await whatsappQueue.add('invoice', {
-      to: toMobile,
-      message: `Invoice ${invoice.code} - Total: ${invoice.totalAmount}`,
-    });
-    logger.info('Invoice WhatsApp queued', { invoiceId, to: toMobile });
+    logger.info('Invoice WhatsApp (no-op): would send', { invoiceId, to: toMobile, code: invoice.code, total: invoice.totalAmount });
   }
 
   async delete(id: string): Promise<boolean> {

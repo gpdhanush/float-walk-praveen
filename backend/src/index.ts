@@ -1,17 +1,12 @@
 import { createApp } from './app.js';
 import { config } from './config/index.js';
 import { logger } from './utils/logger.js';
-import { startQueueWorkers } from './infrastructure/queues/setup.js';
 import { mkdir } from 'fs/promises';
 
 async function main() {
   await mkdir('logs', { recursive: true }).catch(() => {});
 
   const app = createApp();
-
-  if (config.env !== 'test' && config.redis.enabled) {
-    startQueueWorkers();
-  }
 
   app.listen(config.port, () => {
     logger.info(`Server listening on port ${config.port} (${config.env})`);
