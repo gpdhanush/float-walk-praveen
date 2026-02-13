@@ -19,24 +19,39 @@ export class InvoiceRepository implements IInvoiceRepository {
     const totalAmount = data.totalAmount ?? 0;
     const paidAmount = data.paidAmount ?? 0;
 
-    await pool.execute(
-      `INSERT INTO invoices (id, code, customer_id, status, type, total_amount, paid_amount, subtotal, gst_percent, gst_amount, notes, created_by)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
+    try {
+      console.log("[InvoiceRepository] Attempting to insert invoice:", id);
+      await pool.execute(
+        `INSERT INTO invoices (id, code, customer_id, status, type, total_amount, paid_amount, subtotal, gst_percent, gst_amount, notes, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.code,
+          data.customerId,
+          data.status,
+          data.type || "Invoice",
+          totalAmount,
+          paidAmount,
+          data.subtotal || 0,
+          data.gstPercent || 0,
+          data.gstAmount || 0,
+          data.notes || null,
+          data.createdBy,
+        ],
+      );
+      console.log("[InvoiceRepository] Insert successful for invoice:", id);
+    } catch (error: any) {
+      console.error("[InvoiceRepository] INSERT FAILED for invoice:", id);
+      console.error("[InvoiceRepository] Error details:", error.message);
+      console.error("[InvoiceRepository] Error code:", error.code);
+      console.error("[InvoiceRepository] Data:", {
+        ...data,
         id,
-        data.code,
-        data.customerId,
-        data.status,
-        data.type || "Invoice",
         totalAmount,
         paidAmount,
-        data.subtotal || 0,
-        data.gstPercent || 0,
-        data.gstAmount || 0,
-        data.notes || null,
-        data.createdBy,
-      ],
-    );
+      });
+      throw error;
+    }
 
     const rows = await selectRows<Record<string, unknown>>(
       `SELECT i.id, i.code, i.code AS invoiceNumber, i.customer_id AS customerId, 
@@ -277,19 +292,35 @@ export class InvoiceRepository implements IInvoiceRepository {
       totalPrice: data.totalPrice,
     });
 
-    await pool.execute(
-      `INSERT INTO invoice_items (id, invoice_id, product_name, quantity, unit_price, total_price, product_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
+    try {
+      console.log(
+        "[InvoiceRepository] Attempting to add item to invoice:",
         data.invoiceId,
-        data.productName,
-        data.quantity,
-        data.unitPrice,
-        data.totalPrice,
-        data.productId ?? null,
-      ],
-    );
+      );
+      await pool.execute(
+        `INSERT INTO invoice_items (id, invoice_id, product_name, quantity, unit_price, total_price, product_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id,
+          data.invoiceId,
+          data.productName,
+          data.quantity,
+          data.unitPrice || (data as any).price || 0,
+          data.totalPrice ||
+            data.quantity * (data.unitPrice || (data as any).price || 0),
+          data.productId ?? null,
+        ],
+      );
+      console.log("[InvoiceRepository] Item inserted successfully:", id);
+    } catch (error: any) {
+      console.error(
+        "[InvoiceRepository] ADD ITEM FAILED for invoice:",
+        data.invoiceId,
+      );
+      console.error("[InvoiceRepository] Error details:", error.message);
+      console.error("[InvoiceRepository] Error code:", error.code);
+      throw error;
+    }
 
     console.log("[InvoiceRepository] Item added successfully, ID:", id);
 
