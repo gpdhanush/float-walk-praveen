@@ -43,6 +43,8 @@ export function createApp() {
       windowMs: config.rateLimit.windowMs,
       max: config.rateLimit.max,
       message: { success: false, code: 'RATE_LIMIT', message: 'Too many requests' },
+      // Avoid crash when behind proxy (cPanel/LiteSpeed) if trust proxy isn't applied yet
+      validate: { xForwardedForHeader: false },
     })
   );
   app.use(requestLogger);
