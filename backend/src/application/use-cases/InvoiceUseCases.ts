@@ -13,6 +13,7 @@ export interface AddItemInput {
   productName: string;
   quantity: number;
   unitPrice: number;
+  scanPrice?: number;
   productId?: string;
 }
 
@@ -86,6 +87,9 @@ export class InvoiceUseCases {
     if (data.items && data.items.length > 0) {
       console.log("[InvoiceUseCases] Adding", data.items.length, "items");
       for (const item of data.items) {
+        const legacy = item as unknown as { price?: number; scan?: number };
+        const unitPrice = item.unitPrice ?? legacy.price ?? 0;
+        const scanPrice = item.scanPrice ?? legacy.scan ?? 0;
         console.log(
           "[InvoiceUseCases] Adding item:",
           item.productName,
@@ -97,9 +101,9 @@ export class InvoiceUseCases {
           invoiceId: invoice.id,
           productName: item.productName,
           quantity: item.quantity,
-          unitPrice: item.unitPrice || (item as any).price || 0,
-          totalPrice:
-            item.quantity * (item.unitPrice || (item as any).price || 0),
+          unitPrice,
+          scanPrice,
+          totalPrice: item.quantity * unitPrice + scanPrice,
           productId: item.productId ?? null,
         });
       }
@@ -151,13 +155,14 @@ export class InvoiceUseCases {
     const invoice = await this.invoiceRepo.findById(invoiceId);
     if (!invoice)
       throw new AppError(ErrorCodes.NOT_FOUND, "Invoice not found", 404);
-    const totalPrice = input.quantity * input.unitPrice;
+    const totalPrice = input.quantity * input.unitPrice + (input.scanPrice || 0);
     const item = await this.invoiceRepo.addItem({
       id: randomUUID(),
       invoiceId,
       productName: input.productName,
       quantity: input.quantity,
       unitPrice: input.unitPrice,
+      scanPrice: input.scanPrice || 0,
       totalPrice,
       productId: input.productId ?? null,
     });
@@ -270,6 +275,9 @@ export class InvoiceUseCases {
       // Add new items
       console.log("[InvoiceUseCases] Adding", data.items.length, "new items");
       for (const item of data.items) {
+        const legacy = item as unknown as { price?: number; scan?: number };
+        const unitPrice = item.unitPrice ?? legacy.price ?? 0;
+        const scanPrice = item.scanPrice ?? legacy.scan ?? 0;
         console.log(
           "[InvoiceUseCases] Adding item:",
           item.productName,
@@ -281,9 +289,9 @@ export class InvoiceUseCases {
           invoiceId: id,
           productName: item.productName,
           quantity: item.quantity,
-          unitPrice: item.unitPrice || (item as any).price || 0,
-          totalPrice:
-            item.quantity * (item.unitPrice || (item as any).price || 0),
+          unitPrice,
+          scanPrice,
+          totalPrice: item.quantity * unitPrice + scanPrice,
           productId: item.productId ?? null,
         });
       }

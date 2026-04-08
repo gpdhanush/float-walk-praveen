@@ -25,9 +25,17 @@ export interface Expense {
   created_at: string;
 }
 
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+  description: string | null;
+}
+
 export interface InvoiceItem {
   productName: string;
   quantity: number;
+  scan?: number;
   price: number;
   total: number;
 }
@@ -53,8 +61,9 @@ export interface Invoice {
   gstPercent: number;
   gstAmount: number;
   grandTotal: number;
+  totalAmount?: number;
   advancePaid: number;
-  balanceDue: number;
+  balanceDue?: number;
   status: 'paid' | 'pending' | 'partial' | 'hold';
   payments: PaymentRecord[];
   notes: string;
@@ -66,6 +75,7 @@ export interface Invoice {
 interface DataState {
   customers: Customer[];
   expenses: Expense[];
+  products: Product[];
   invoices: Invoice[];
   dataFetched: boolean;
   isLoading: boolean;
@@ -83,8 +93,13 @@ interface DataState {
   updateExpense: (id: string, e: Partial<Expense>) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
 
+  // Products
+  addProduct: (p: Omit<Product, 'id'>) => Promise<void>;
+  updateProduct: (id: number, p: Partial<Product>) => Promise<void>;
+  deleteProduct: (id: number) => Promise<void>;
+
   // Invoices
-  addInvoice: (inv: Omit<Invoice, 'id' | 'created_at' | 'invoiceNumber'> & { invoiceNumber?: string }) => Promise<string>;
+  addInvoice: (inv: Partial<Invoice> & Pick<Invoice, 'customerId' | 'items'>) => Promise<string>;
   updateInvoice: (id: string, inv: Partial<Invoice>) => Promise<void>;
   deleteInvoice: (id: string) => Promise<void>;
   fetchInvoice: (id: string) => Promise<Invoice | null>;
@@ -94,6 +109,7 @@ interface DataState {
 export const useDataStore = create<DataState>((set, get) => ({
   customers: [],
   expenses: [],
+  products: [],
   invoices: [],
   dataFetched: false,
   isLoading: false,
@@ -107,25 +123,38 @@ export const useDataStore = create<DataState>((set, get) => ({
     
     try {
       // Add 5-second delay to simulate slow network and see loader
-      const [customersRes, invoicesRes, expensesRes] = await Promise.all([
+      const [customersRes, invoicesRes, expensesRes, productsRes] = await Promise.all([
         api.get('/customers?limit=100').then(async (res) => {
           // await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay
           return res;
         }),
         api.get('/invoices?limit=100'),
         api.get('/expenses?limit=100'),
+        api.get('/products?limit=200'),
       ]);
       
       console.log('✅ Data fetched successfully', {
         customers: customersRes.data?.length || 0,
         invoices: invoicesRes.data?.length || 0,
         expenses: expensesRes.data?.length || 0,
+        products: productsRes.data?.length || 0,
       });
       
+      const normalizeExpense = (e: any): Expense => ({
+        id: String(e.id),
+        category: String(e.category ?? ''),
+        amount: Number(e.amount ?? 0),
+        description: String(e.description ?? ''),
+        date: String(e.date ?? e.expenseDate ?? ''),
+        deleted_at: (e.deleted_at ?? e.deletedAt ?? null) as string | null,
+        created_at: String(e.created_at ?? e.createdAt ?? ''),
+      });
+
       set({ 
         customers: customersRes.data || [], 
         invoices: invoicesRes.data || [],
-        expenses: expensesRes.data || [],
+        expenses: (expensesRes.data || []).map(normalizeExpense),
+        products: productsRes.data || [],
         dataFetched: true,
         isLoading: false
       });
@@ -175,20 +204,68 @@ export const useDataStore = create<DataState>((set, get) => ({
   },
 
   addExpense: async (e) => {
-    const res = await api.post('/expenses', e);
-    const data = res.data?.data || res.data || res;
+    const payload = {
+      category: e.category,
+      amount: e.amount,
+      description: e.description ?? null,
+      expenseDate: e.date, // backend expects expenseDate (ISO)
+    };
+    const res = await api.post('/expenses', payload);
+    const raw = res.data?.data || res.data || res;
+    const data: Expense = {
+      id: String(raw.id),
+      category: String(raw.category ?? ''),
+      amount: Number(raw.amount ?? 0),
+      description: String(raw.description ?? ''),
+      date: String(raw.date ?? raw.expenseDate ?? e.date ?? ''),
+      deleted_at: (raw.deleted_at ?? raw.deletedAt ?? null) as string | null,
+      created_at: String(raw.created_at ?? raw.createdAt ?? ''),
+    };
     set(s => ({ expenses: [...s.expenses, data] }));
   },
   updateExpense: async (id, e) => {
-    await api.patch(`/expenses/${id}`, e);
+    const payload: any = { ...e };
+    if ('date' in payload) {
+      payload.expenseDate = payload.date;
+      delete payload.date;
+    }
+    const res = await api.patch(`/expenses/${id}`, payload);
+    const raw = res.data?.data || res.data || res;
+    const data: Partial<Expense> = {
+      category: raw.category ?? e.category,
+      amount: raw.amount ?? e.amount,
+      description: raw.description ?? e.description,
+      date: raw.date ?? raw.expenseDate ?? e.date,
+      deleted_at: raw.deleted_at ?? raw.deletedAt,
+      created_at: raw.created_at ?? raw.createdAt,
+    };
     set(s => ({
-      expenses: s.expenses.map(x => x.id === id ? { ...x, ...e } : x)
+      expenses: s.expenses.map(x => x.id === id ? { ...x, ...data } : x)
     }));
   },
   deleteExpense: async (id) => {
     await api.delete(`/expenses/${id}`);
     set(s => ({
       expenses: s.expenses.map(x => x.id === id ? { ...x, deleted_at: new Date().toISOString() } : x)
+    }));
+  },
+
+  addProduct: async (p) => {
+    const res = await api.post('/products', p);
+    const data = res.data?.data || res.data || res;
+    set(s => ({ products: [...s.products, data] }));
+  },
+  updateProduct: async (id, p) => {
+    const res = await api.patch(`/products/${id}`, p);
+    const data = res.data?.data || res.data || res;
+    set(s => ({
+      products: s.products.map(x => x.id === id ? { ...x, ...data } : x)
+    }));
+  },
+  deleteProduct: async (id) => {
+    await api.delete(`/products/${id}`);
+    set(s => ({
+      products: s.products.filter(x => x.id !== id)
     }));
   },
 

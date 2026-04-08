@@ -4,12 +4,14 @@ import { UserUseCases } from './application/use-cases/UserUseCases.js';
 import { CustomerUseCases } from './application/use-cases/CustomerUseCases.js';
 import { InvoiceUseCases } from './application/use-cases/InvoiceUseCases.js';
 import { ExpenseUseCases } from './application/use-cases/ExpenseUseCases.js';
+import { ProductUseCases } from './application/use-cases/ProductUseCases.js';
 import { ReportUseCases } from './application/use-cases/ReportUseCases.js';
 import { StoreSettingsUseCases } from './application/use-cases/StoreSettingsUseCases.js';
 import { UserRepository } from './infrastructure/db/repositories/UserRepository.js';
 import { CustomerRepository } from './infrastructure/db/repositories/CustomerRepository.js';
 import { InvoiceRepository } from './infrastructure/db/repositories/InvoiceRepository.js';
 import { ExpenseRepository } from './infrastructure/db/repositories/ExpenseRepository.js';
+import { ProductRepository } from './infrastructure/db/repositories/ProductRepository.js';
 import { StoreSettingsRepository } from './infrastructure/db/repositories/StoreSettingsRepository.js';
 import { CodeSequenceRepository } from './infrastructure/db/repositories/CodeSequenceRepository.js';
 
@@ -17,6 +19,7 @@ const userRepo = new UserRepository();
 const customerRepo = new CustomerRepository();
 const invoiceRepo = new InvoiceRepository();
 const expenseRepo = new ExpenseRepository();
+const productRepo = new ProductRepository();
 const storeSettingsRepo = new StoreSettingsRepository();
 const codeSequenceRepo = new CodeSequenceRepository();
 
@@ -31,5 +34,6 @@ export const invoiceUseCases = new InvoiceUseCases(
   codeGenerator
 );
 export const expenseUseCases = new ExpenseUseCases(expenseRepo, codeGenerator);
+export const productUseCases = new ProductUseCases(productRepo);
 export const reportUseCases = new ReportUseCases();
 export const storeSettingsUseCases = new StoreSettingsUseCases(storeSettingsRepo);

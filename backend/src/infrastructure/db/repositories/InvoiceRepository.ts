@@ -244,7 +244,7 @@ export class InvoiceRepository implements IInvoiceRepository {
 
     for (const [k, v] of Object.entries(data)) {
       if (v === undefined || ignoredFields.includes(k)) continue;
-      let col = map[k] ?? k;
+      const col = map[k] ?? k;
       fields.push(`${col} = ?`);
       values.push(v);
     }
@@ -289,6 +289,7 @@ export class InvoiceRepository implements IInvoiceRepository {
       productName: data.productName,
       quantity: data.quantity,
       unitPrice: data.unitPrice,
+      scanPrice: data.scanPrice,
       totalPrice: data.totalPrice,
     });
 
@@ -297,17 +298,20 @@ export class InvoiceRepository implements IInvoiceRepository {
         "[InvoiceRepository] Attempting to add item to invoice:",
         data.invoiceId,
       );
+      const legacy = data as unknown as { price?: number; scan?: number };
+      const unitPrice = data.unitPrice ?? legacy.price ?? 0;
+      const scanPrice = data.scanPrice ?? legacy.scan ?? 0;
       await pool.execute(
-        `INSERT INTO invoice_items (id, invoice_id, product_name, quantity, unit_price, total_price, product_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO invoice_items (id, invoice_id, product_name, quantity, unit_price, scan_price, total_price, product_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           data.invoiceId,
           data.productName,
           data.quantity,
-          data.unitPrice || (data as any).price || 0,
-          data.totalPrice ||
-            data.quantity * (data.unitPrice || (data as any).price || 0),
+          unitPrice,
+          scanPrice,
+          data.totalPrice || data.quantity * unitPrice + scanPrice,
           data.productId ?? null,
         ],
       );
@@ -333,7 +337,7 @@ export class InvoiceRepository implements IInvoiceRepository {
 
   async getItems(invoiceId: string): Promise<InvoiceItem[]> {
     const rows = await selectRows<Record<string, unknown>>(
-      "SELECT id, invoice_id AS invoiceId, product_name AS productName, quantity, unit_price AS price, total_price AS total, product_id AS productId FROM invoice_items WHERE invoice_id = ? ORDER BY id",
+      "SELECT id, invoice_id AS invoiceId, product_name AS productName, quantity, unit_price AS price, scan_price AS scan, total_price AS total, product_id AS productId FROM invoice_items WHERE invoice_id = ? ORDER BY id",
       [invoiceId],
     );
     return mapRows<InvoiceItem>(rows);

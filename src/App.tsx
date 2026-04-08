@@ -22,6 +22,7 @@ const InvoiceForm = lazy(() => import("@/pages/InvoiceForm"));
 const InvoiceView = lazy(() => import("@/pages/InvoiceView"));
 const InvoicePrint = lazy(() => import("@/pages/InvoicePrint"));
 const Expenses = lazy(() => import("@/pages/Expenses"));
+const Products = lazy(() => import("@/pages/Products"));
 const Reports = lazy(() => import("@/pages/Reports"));
 const Settings = lazy(() => import("@/pages/SettingsNew"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
@@ -95,6 +96,7 @@ function AppContent() {
           <Route path="/invoices/new" element={<InvoiceForm />} />
           <Route path="/invoices/edit/:id" element={<InvoiceForm />} />
           <Route path="/invoice/:id" element={<InvoiceView />} />
+          <Route path="/products" element={<Products />} />
           <Route path="/expenses" element={<Expenses />} />
           {user?.role === 'admin' && (
             <>

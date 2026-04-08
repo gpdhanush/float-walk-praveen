@@ -39,7 +39,17 @@ export default function Expenses() {
     { key: 'category', header: t('category', language) },
     { key: 'amount', header: t('amount', language), render: (e: Expense) => `₹${e.amount.toLocaleString('en-IN')}` },
     { key: 'description', header: t('description', language) },
-    { key: 'date', header: t('date', language) },
+    { 
+      key: 'date', 
+      header: t('date', language),
+      render: (e: Expense) => {
+        try {
+          return format(new Date(e.date), 'dd-MMM-yyyy');
+        } catch {
+          return e.date;
+        }
+      }
+    },
   ];
 
   return (

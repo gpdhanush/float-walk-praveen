@@ -79,7 +79,7 @@ export default function InvoiceView() {
     }
 
     try {
-      toast.info('Downloading PDF and opening WhatsApp...');
+      toast.info('Preparing PDF for WhatsApp...');
       
       // Generate PDF first
       const { default: html2canvas } = await import('html2canvas');
@@ -105,9 +105,9 @@ export default function InvoiceView() {
       const imgData = canvas.toDataURL('image/png');
       pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
       
-      // Download the PDF
       const filename = `Float_Walk_${inv.invoiceNumber}_${timestamp}.pdf`;
-      pdf.save(filename);
+      const pdfBlob: Blob = pdf.output('blob');
+      const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
       
       // Clean phone number (remove non-digits and add country code if needed)
       let phoneNumber = inv.customerMobile.replace(/\D/g, '');
@@ -130,11 +130,27 @@ export default function InvoiceView() {
         `_The invoice PDF has been downloaded to your device. Please attach it to this chat and send._\n\n` +
         `Thank you for your business!`
       );
-      
-      // Open WhatsApp (works on both mobile app and web)
+
+      // Best-effort: share the PDF file directly (works on most mobile browsers).
+      const navAny = navigator as any;
+      const canShareFile =
+        typeof navAny?.share === 'function' &&
+        (typeof navAny?.canShare !== 'function' || navAny.canShare({ files: [pdfFile] }));
+
+      if (canShareFile) {
+        await navAny.share({
+          title: `Invoice ${inv.invoiceNumber}`,
+          text: decodeURIComponent(msg),
+          files: [pdfFile],
+        });
+        toast.success('Share dialog opened. Choose WhatsApp to send the PDF.');
+        return;
+      }
+
+      // Fallback (desktop/unsupported): download PDF then open WhatsApp with message.
+      pdf.save(filename);
       window.open(`https://wa.me/${phoneNumber}?text=${msg}`, '_blank');
-      
-      toast.success('PDF downloaded! Opening WhatsApp...');
+      toast.success('PDF downloaded. Please attach it in WhatsApp and send.');
     } catch (error) {
       console.error('WhatsApp share error:', error);
       toast.error('Failed to process request');

@@ -5,6 +5,7 @@ export interface InvoiceItem extends BaseEntity {
   productName: string;
   quantity: number;
   unitPrice: number;
+  scanPrice?: number;
   totalPrice: number;
   productId: string | null;
 }

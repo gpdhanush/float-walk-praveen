@@ -4,7 +4,9 @@ const itemSchema = Joi.object({
   productName: Joi.string().min(1).required(),
   quantity: Joi.number().min(0.01).required(),
   price: Joi.number().min(0).optional(),
+  scan: Joi.number().min(0).optional(),
   unitPrice: Joi.number().min(0).optional(),
+  scanPrice: Joi.number().min(0).optional(),
   total: Joi.number().min(0).optional(),
   productId: Joi.string().uuid().allow(null, ''),
 });

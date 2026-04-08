@@ -33,10 +33,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 
 export default function InvoiceForm() {
   const { id } = useParams();
-  const { invoices, customers, addInvoice, updateInvoice, addCustomer, fetchInvoice } = useDataStore();
+  const { invoices, customers, products, addInvoice, updateInvoice, addCustomer, fetchInvoice } = useDataStore();
   const { language, gstPercent } = useSettingsStore();
   const navigate = useNavigate();
   const activeCustomers = customers.filter(c => !c.deleted_at);
+  const activeProducts = (products || []).slice().sort((a, b) => a.name.localeCompare(b.name));
+  const [productPickerOpen, setProductPickerOpen] = useState<Record<number, boolean>>({});
+  const [customItemMode, setCustomItemMode] = useState<Record<number, boolean>>({});
 
   const [customerId, setCustomerId] = useState('');
   const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
@@ -48,7 +51,9 @@ export default function InvoiceForm() {
   const [customerAddress, setCustomerAddress] = useState('');
 
   // Default one empty item
-  const [items, setItems] = useState<InvoiceItem[]>([{ productName: '', quantity: 1, price: 0, total: 0 }]);
+  const [items, setItems] = useState<InvoiceItem[]>([
+    { productName: '', quantity: 1, scan: 0, price: 0, total: 0 },
+  ]);
   const [isGstBill, setIsGstBill] = useState(true);
   const [gst, setGst] = useState(gstPercent);
   const [advancePaid, setAdvancePaid] = useState(0);
@@ -81,12 +86,15 @@ export default function InvoiceForm() {
       setCustomerAddress(existingInvoice.customerAddress || '');
       // Normalize items so quantity, price, total are numbers (API may return strings)
       const rawItems = existingInvoice.items || [];
-      setItems(rawItems.map((it: InvoiceItem & { totalPrice?: number }) => {
-        const q = Number(it.quantity ?? 0);
-        const p = Number(it.price ?? 0);
-        const t = Number(it.total ?? (it as any).totalPrice ?? 0) || q * p;
-        return { productName: it.productName ?? '', quantity: q, price: p, total: t };
-      }));
+      setItems(
+        rawItems.map((it: InvoiceItem & { totalPrice?: number; scanPrice?: number }) => {
+          const q = Number(it.quantity ?? 0);
+          const p = Number(it.price ?? 0);
+          const scan = Number(it.scan ?? it.scanPrice ?? 0);
+          const t = Number(it.total ?? it.totalPrice ?? 0) || q * p + scan;
+          return { productName: it.productName ?? '', quantity: q, scan, price: p, total: t };
+        }),
+      );
       setGst(Number(existingInvoice.gstPercent ?? 0));
       setIsGstBill(Number(existingInvoice.gstPercent ?? 0) > 0);
       setAdvancePaid(Number(existingInvoice.paidAmount ?? existingInvoice.advancePaid ?? 0));
@@ -154,14 +162,45 @@ export default function InvoiceForm() {
     }
   }, [items, gst, advancePaid, manualStatusChange]);
 
-  const addItem = () => setItems([...items, { productName: '', quantity: 1, price: 0, total: 0 }]);
+  const addItem = () =>
+    setItems([...items, { productName: '', quantity: 1, scan: 0, price: 0, total: 0 }]);
 
-  const updateItem = (idx: number, field: string, value: string | number) => {
+  const updateItem = (
+    idx: number,
+    field: 'productName' | 'quantity' | 'scan' | 'price',
+    value: string | number,
+  ) => {
     const newItems = [...items];
     const item = { ...newItems[idx], [field]: value };
-    item.total = (item.quantity || 0) * (item.price || 0);
+    item.total = (Number(item.quantity) || 0) * (Number(item.price) || 0) + (Number(item.scan) || 0);
     newItems[idx] = item;
     setItems(newItems);
+  };
+
+  const selectProductForItem = (idx: number, productName: string) => {
+    const product = activeProducts.find(p => p.name === productName);
+    if (!product) {
+      updateItem(idx, 'productName', productName);
+      return;
+    }
+    // When selecting a product, map name + price into the line item.
+    const newItems = [...items];
+    const item = { ...newItems[idx], productName: product.name, price: Number(product.price ?? 0) };
+    item.total = (Number(item.quantity) || 0) * (Number(item.price) || 0) + (Number(item.scan) || 0);
+    newItems[idx] = item;
+    setItems(newItems);
+  };
+
+  const enableCustomItemForRow = (idx: number) => {
+    setCustomItemMode((s) => ({ ...s, [idx]: true }));
+    setProductPickerOpen((s) => ({ ...s, [idx]: false }));
+    // Clear name so user can type their own
+    updateItem(idx, 'productName', '');
+  };
+
+  const enableProductPickerForRow = (idx: number) => {
+    setCustomItemMode((s) => ({ ...s, [idx]: false }));
+    setProductPickerOpen((s) => ({ ...s, [idx]: true }));
   };
 
   const removeItem = (idx: number) => setItems(items.filter((_, i) => i !== idx));
@@ -205,7 +244,9 @@ export default function InvoiceForm() {
           productName: item.productName,
           quantity: item.quantity,
           price: item.price,
+          scan: Number(item.scan ?? 0),
           unitPrice: item.price,
+          scanPrice: Number(item.scan ?? 0),
           total: item.total,
           totalPrice: item.total,
         }));
@@ -227,7 +268,6 @@ export default function InvoiceForm() {
           customerMobile,
           customerEmail,
           customerAddress,
-          totalAmount: grandTotal,
           paidAmount: advancePaid,
           status,
           type,
@@ -247,7 +287,9 @@ export default function InvoiceForm() {
           productName: item.productName,
           quantity: item.quantity,
           price: item.price,
+          scan: Number(item.scan ?? 0),
           unitPrice: item.price,
+          scanPrice: Number(item.scan ?? 0),
           total: item.total,
           totalPrice: item.total,
         }));
@@ -270,7 +312,6 @@ export default function InvoiceForm() {
           customerMobile,
           customerEmail,
           customerAddress,
-          totalAmount: grandTotal,
           paidAmount: advancePaid,
           status,
           payments: [],
@@ -527,15 +568,84 @@ export default function InvoiceForm() {
                 <Label className="text-base font-semibold">Items</Label>
                 <Button type="button" variant="outline" size="sm" onClick={addItem}><Plus className="w-3 h-3 mr-1" /> Add Item</Button>
               </div>
+              <div className="grid grid-cols-12 gap-3 text-xs font-medium text-muted-foreground px-2">
+                <div className="col-span-4">Items</div>
+                <div className="col-span-1 text-center">Qty</div>
+                <div className="col-span-2">Price</div>
+                <div className="col-span-2">Scan Amount</div>
+                <div className="col-span-2">Total Price</div>
+                <div className="col-span-1" />
+              </div>
               {items.map((item, idx) => (
                 <div key={idx} className="grid grid-cols-12 gap-3 items-end bg-muted/20 p-2 rounded-lg border border-transparent hover:border-border transition-colors">
-                  <div className="col-span-5">
-                    <Input 
-                        placeholder="Item Name" 
-                        value={item.productName} 
-                        onChange={e => updateItem(idx, 'productName', e.target.value)} 
-                        className="bg-background"
-                    />
+                  <div className="col-span-4">
+                    {customItemMode[idx] ? (
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Other item name"
+                          value={item.productName}
+                          onChange={(e) => updateItem(idx, 'productName', e.target.value)}
+                          className="bg-background"
+                        />
+                        <Button type="button" variant="outline" onClick={() => enableProductPickerForRow(idx)}>
+                          Select
+                        </Button>
+                      </div>
+                    ) : (
+                      <Popover
+                        open={!!productPickerOpen[idx]}
+                        onOpenChange={(open) => setProductPickerOpen((s) => ({ ...s, [idx]: open }))}
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "w-full justify-between bg-background font-normal",
+                              !item.productName && "text-muted-foreground",
+                            )}
+                          >
+                            <span className="truncate">
+                              {item.productName ? item.productName : "Select product"}
+                            </span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[360px] p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search products..." />
+                            <CommandList>
+                              <CommandEmpty>No products found.</CommandEmpty>
+                              <CommandGroup>
+                                <CommandItem value="__other__" onSelect={() => enableCustomItemForRow(idx)}>
+                                  Other (Custom item)
+                                </CommandItem>
+                              </CommandGroup>
+                              <CommandGroup>
+                                {activeProducts.map((p) => (
+                                  <CommandItem
+                                    key={p.id}
+                                    value={p.name}
+                                    onSelect={(val) => {
+                                      selectProductForItem(idx, val);
+                                      setCustomItemMode((s) => ({ ...s, [idx]: false }));
+                                      setProductPickerOpen((s) => ({ ...s, [idx]: false }));
+                                    }}
+                                    className="flex items-center justify-between"
+                                  >
+                                    <span className="truncate">{p.name}</span>
+                                    <span className="text-muted-foreground ml-3 whitespace-nowrap">
+                                      ₹{Number(p.price ?? 0).toLocaleString('en-IN')}
+                                    </span>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    )}
                   </div>
                   <div className="col-span-1">
                     <Input type="number" placeholder="Qty" value={item.quantity} onChange={e => updateItem(idx, 'quantity', +e.target.value)} className="bg-background px-1 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
@@ -543,7 +653,16 @@ export default function InvoiceForm() {
                   <div className="col-span-2">
                     <Input type="number" placeholder="Price" value={item.price} onChange={e => updateItem(idx, 'price', +e.target.value)} className="bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                   </div>
-                  <div className="col-span-3">
+                  <div className="col-span-2">
+                    <Input
+                      type="number"
+                      placeholder="Scan Amount"
+                      value={Number(item.scan ?? 0)}
+                      onChange={e => updateItem(idx, 'scan', +e.target.value)}
+                      className="bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
+                  <div className="col-span-2">
                     <Input value={`₹${item.total.toLocaleString('en-IN')}`} readOnly className="bg-muted font-medium" />
                   </div>
                   <div className="col-span-1 flex justify-center">

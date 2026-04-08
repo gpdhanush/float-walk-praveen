@@ -24,7 +24,7 @@ export default function SettingsNew() {
     storeName: settings.storeName,
     address: settings.address,
     mobile: settings.mobile,
-    officeMobile: settings.phone,
+    officeMobile: settings.officePhone,
     ownerName: settings.ownerName,
     gstPercent: settings.gstPercent,
     gstNumber: settings.gstNumber,
@@ -54,7 +54,7 @@ export default function SettingsNew() {
       storeName: settings.storeName,
       address: settings.address,
       mobile: settings.mobile,
-      officeMobile: settings.phone,
+      officeMobile: settings.officePhone,
       ownerName: settings.ownerName,
       gstPercent: settings.gstPercent,
       gstNumber: settings.gstNumber,
@@ -67,7 +67,7 @@ export default function SettingsNew() {
     try {
       await settings.updateSettings({
         ...storeForm,
-        phone: storeForm.officeMobile,
+        officePhone: storeForm.officeMobile,
       });
       
       // Update auth store with new owner name
@@ -153,22 +153,26 @@ export default function SettingsNew() {
     } catch (error: any) {
       console.error('Failed to upload logo:', error);
       toast.error('Failed to upload logo');
+    } finally {
+      setShowCropDialog(false);
     }
   };
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Settings</h1>
-      
-      {/* Store Details */}
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Store className="w-5 h-5" />
-            Update Store Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Store Details - wide */}
+        <div className="lg:col-span-2">
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Store className="w-5 h-5" />
+                Update Store Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Store Name</Label>
@@ -307,72 +311,46 @@ export default function SettingsNew() {
                 </div>
               </div>
 
-        </CardContent>
-      </Card>
+              <div className="flex justify-end">
+                <Button onClick={handleSaveStore} disabled={isSaving} size="lg">{isSaving ? 'Saving...' : 'Save Store Details'}</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Change Password */}
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5" />
-            Change Password
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Current Password</Label>
-                  <Input 
-                    type="password"
-                    value={passwordForm.currentPassword} 
-                    onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} 
-                    placeholder="Enter current password"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>New Password</Label>
-                  <Input 
-                    type="password"
-                    value={passwordForm.newPassword} 
-                    onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} 
-                    placeholder="Enter new password (min 6 characters)"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Confirm New Password</Label>
-                  <Input 
-                    type="password"
-                    value={passwordForm.confirmPassword} 
-                    onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} 
-                    placeholder="Confirm new password"
-                  />
-                </div>
+        {/* Change Password - own column */}
+        <div>
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="w-5 h-5" />
+                Change Password
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Current Password</Label>
+                <Input type="password" value={passwordForm.currentPassword} onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} placeholder="Enter current password" />
               </div>
 
-        </CardContent>
-      </Card>
+              <div className="space-y-2">
+                <Label>New Password</Label>
+                <Input type="password" value={passwordForm.newPassword} onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} placeholder="Enter new password (min 6 characters)" />
+                <p className="text-xs text-muted-foreground">Use a strong password: mix uppercase, lowercase, numbers and symbols.</p>
+              </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-4">
-        <Button 
-          onClick={handleSaveStore} 
-          disabled={isSaving}
-          size="lg"
-          className="flex-1"
-        >
-          {isSaving ? 'Saving...' : 'Save Store Details'}
-        </Button>
-        <Button 
-          onClick={handleChangePassword} 
-          disabled={isChangingPassword}
-          variant="outline"
-          size="lg"
-        >
-          {isChangingPassword ? 'Changing...' : 'Change Password'}
-        </Button>
+              <div className="space-y-2">
+                <Label>Confirm New Password</Label>
+                <Input type="password" value={passwordForm.confirmPassword} onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} placeholder="Confirm new password" />
+              </div>
+
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })} disabled={isChangingPassword}>Reset</Button>
+                <Button className="ml-2" onClick={handleChangePassword} disabled={isChangingPassword}>{isChangingPassword ? 'Changing...' : 'Change Password'}</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Image Crop Dialog */}

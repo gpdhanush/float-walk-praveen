@@ -7,13 +7,14 @@ import { cn } from '@/lib/utils';
 import { getLogoUrl } from '@/lib/utils/logoUtils';
 import {
   LayoutDashboard, Users, FileText,
-  Receipt, BarChart3, Settings, LogOut
+  Receipt, BarChart3, Settings, LogOut, Package
 } from 'lucide-react';
 import { ConfirmDialog } from '../shared/ConfirmDialog';
 
 const adminLinks = [
   { to: '/', icon: LayoutDashboard, label: 'dashboard' },
   { to: '/customers', icon: Users, label: 'customers' },
+  { to: '/products', icon: Package, label: 'products' },
   { to: '/invoices', icon: FileText, label: 'invoices' },
   { to: '/expenses', icon: Receipt, label: 'expenses' },
   { to: '/reports', icon: BarChart3, label: 'reports' },
@@ -23,6 +24,7 @@ const adminLinks = [
 const employeeLinks = [
   { to: '/', icon: LayoutDashboard, label: 'dashboard' },
   { to: '/customers', icon: Users, label: 'customers' },
+  { to: '/products', icon: Package, label: 'products' },
   { to: '/invoices', icon: FileText, label: 'invoices' },
   { to: '/expenses', icon: Receipt, label: 'expenses' },
 ];
