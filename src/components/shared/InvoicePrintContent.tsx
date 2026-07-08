@@ -33,11 +33,29 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
   const grandTotal = rawGrandTotal + roundOff;
   const advancePaid = Number(inv.advancePaid ?? inv.paidAmount ?? 0);
   const amountDue = grandTotal - advancePaid;
+  const balanceDueFromApi = Number(inv.balanceDue ?? NaN);
+  const balanceDue =
+    Number.isFinite(balanceDueFromApi) ? balanceDueFromApi : amountDue;
+  const isPaid = inv.status === "paid";
+  // If marked as paid, treat the remaining as "final payment" to make due = 0.
+  const finalPayment = isPaid ? Math.max(0, grandTotal - advancePaid) : 0;
+  const dueDisplay = isPaid ? 0 : balanceDue;
 
   const isGstBill = (inv.gstAmount || 0) > 0 || (inv.gstPercent || 0) > 0;
 
   // Get full logo URL
   const fullLogoUrl = getLogoUrl(settings.logoUrl);
+
+  const statusBadgeClass =
+    inv.status === "paid"
+      ? "bg-green-100 text-green-700"
+      : inv.status === "pending"
+        ? "bg-red-100 text-red-700"
+        : inv.status === "partial"
+          ? "bg-yellow-100 text-yellow-700"
+          : inv.status === "hold"
+            ? "bg-gray-100 text-gray-600"
+            : "bg-gray-100 text-gray-600";
 
   return (
     <>
@@ -127,15 +145,7 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
                   {formattedDate}
                 </p>
                 <div
-                  className={`text-[10px] px-3 py-1 rounded-full inline-block font-bold uppercase mt-2 ${
-                    inv.status === "paid"
-                      ? "bg-green-100 text-green-700"
-                      : inv.status === "partial"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : inv.status === "hold"
-                          ? "bg-gray-100 text-gray-600"
-                          : "bg-red-100 text-red-700"
-                  }`}
+                  className={`text-[14px] px-3 py-1 rounded-full inline-block font-bold uppercase mt-2 ${statusBadgeClass}`}
                 >
                   {inv.status}
                 </div>
@@ -172,6 +182,9 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
               <th className="text-left p-2 border border-gray-400">
                 DESCRIPTION
               </th>
+              <th className="text-right p-2 border border-gray-400 w-24">
+                SCAN
+              </th>
               <th className="text-center p-2 border border-gray-400 w-16">
                 QTY
               </th>
@@ -188,6 +201,12 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
               <tr key={i}>
                 <td className="p-2 border border-gray-400">
                   {item.productName}
+                </td>
+                <td className="p-2 border border-gray-400 text-right">
+                  ₹
+                  {(Number((item as any).scan ?? (item as any).scanPrice ?? 0) || 0).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                  })}
                 </td>
                 <td className="p-2 border border-gray-400 text-center font-medium">
                   {item.quantity}
@@ -213,47 +232,16 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
         <div className="ml-auto w-80 border border-gray-400">
           <div className="divide-y divide-gray-400 text-xs">
             <div className="flex justify-between items-center py-1.5 px-2">
-              <span className="font-semibold">Subtotal</span>
+              <span className="font-semibold">Invoice Total</span>
               <span className="font-medium">
-                ₹
-                {(Number(subtotal) || 0).toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                })}
-              </span>
-            </div>
-            {isGstBill && (
-              <div className="flex justify-between items-center py-1.5 px-2">
-                <span className="font-semibold">
-                  GST ({inv.gstPercent || 0}%)
-                </span>
-                <span className="font-medium">
-                  ₹
-                  {(Number(gstAmount) || 0).toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-            )}
-            {roundOff !== 0 && (
-              <div className="flex justify-between items-center py-1.5 px-2">
-                <span className="font-semibold">Round Off</span>
-                <span className="font-medium">
-                  {roundOff > 0 ? "+" : ""}
-                  {(Number(roundOff) || 0).toFixed(2)}
-                </span>
-              </div>
-            )}
-            <div className="flex justify-between items-center py-1.5 px-2 font-medium border-t border-gray-400">
-              <span>Grand Total</span>
-              <span>
                 ₹
                 {(Number(grandTotal) || 0).toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                 })}
               </span>
             </div>
-            <div className="flex justify-between items-center py-1.5 px-2 text-red-600">
-              <span className="font-semibold">Advance Paid</span>
+            <div className="flex justify-between items-center py-1.5 px-2 text-green-700">
+              <span className="font-semibold">Advance Received</span>
               <span className="font-medium">
                 -₹
                 {(Number(advancePaid) || 0).toLocaleString("en-IN", {
@@ -261,11 +249,26 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
                 })}
               </span>
             </div>
-            <div className="flex justify-between items-center py-2 px-2 bg-primary text-primary-foreground font-bold">
-              <span>Amount Due</span>
+            {isPaid && finalPayment > 0 && (
+              <div className="flex justify-between items-center py-1.5 px-2 text-green-700">
+                <span className="font-semibold">Final Payment</span>
+                <span className="font-medium">
+                  -₹
+                  {(Number(finalPayment) || 0).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+            )}
+            <div
+              className={`flex justify-between items-center py-2 px-2 font-bold ${
+                isPaid ? "bg-green-600 text-white" : "bg-red-600 text-white"
+              }`}
+            >
+              <span>{isPaid ? "Balance Due" : "Amount Due"}</span>
               <span>
                 ₹
-                {(Number(amountDue) || 0).toLocaleString("en-IN", {
+                {(Number(dueDisplay) || 0).toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                 })}
               </span>
@@ -277,9 +280,19 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
         <div className="mt-4 py-2 px-3 border border-gray-400 bg-gray-50">
           <p className="text-xs">
             <span className="font-semibold">Amount in Words: </span>
-            <span className="font-bold">{numberToWords(amountDue)}</span>
+            <span className="font-bold">{numberToWords(isPaid ? grandTotal : dueDisplay)}</span>
           </p>
         </div>
+
+        {/* Notes (only when present) */}
+        {String(inv.notes ?? "").trim().length > 0 && (
+          <div className="mt-3 py-2 px-3 border border-gray-400 bg-white">
+            <p className="text-xs font-semibold mb-1">Notes</p>
+            <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+              {String(inv.notes).trim()}
+            </p>
+          </div>
+        )}
 
         {/* Footer - Signatures (underline style) + Thank You */}
         <div className="mt-12">

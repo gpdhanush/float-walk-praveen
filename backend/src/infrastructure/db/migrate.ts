@@ -11,7 +11,13 @@ async function runMigrations() {
   const statements = schema
     .split(';')
     .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !s.startsWith('--'));
+    .filter(
+      (s) =>
+        s.length > 0 &&
+        !s.startsWith('--') &&
+        // Ignore mysqldump conditional directives like /*!40101 SET ... */
+        !s.startsWith('/*!'),
+    );
 
   for (const stmt of statements) {
     if (stmt) await pool.execute(stmt + ';');

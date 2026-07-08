@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Float Walk">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0ea5e9"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <path d="M152 300c22-40 62-68 108-68 46 0 86 28 108 68 6 10 3 23-7 30-10 7-24 5-32-5-15-24-41-40-69-40s-54 16-69 40c-7 10-22 12-32 5-10-7-13-20-7-30z" fill="#fff" opacity="0.95"/>
+  <path d="M168 232c18-52 66-88 122-88s104 36 122 88c4 12-2 25-14 29-12 4-25-2-29-14-12-34-44-58-79-58s-67 24-79 58c-4 12-17 18-29 14-12-4-18-17-14-29z" fill="#fff" opacity="0.9"/>
+  <text x="256" y="392" text-anchor="middle" font-size="54" font-family="Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial" fill="#ffffff" font-weight="700">FW</text>
+</svg>
+

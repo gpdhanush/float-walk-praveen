@@ -166,8 +166,8 @@ export default function InvoiceView() {
         <Button variant="outline" size="sm" onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" />Delete</Button>
         <div className="h-6 w-px bg-border" />
         <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2"><Printer className="w-4 h-4" />{t('print', settings.language)}</Button>
-        <Button variant="outline" size="sm" onClick={handlePdf} className="gap-2"><Download className="w-4 h-4" />{t('download_pdf', settings.language)}</Button>
-        <Button variant="outline" size="sm" onClick={handleWhatsApp} className="gap-2"><MessageCircle className="w-4 h-4" />{t('share_whatsapp', settings.language)}</Button>
+        {/* <Button variant="outline" size="sm" onClick={handlePdf} className="gap-2"><Download className="w-4 h-4" />{t('download_pdf', settings.language)}</Button> */}
+        {/* <Button variant="outline" size="sm" onClick={handleWhatsApp} className="gap-2"><MessageCircle className="w-4 h-4" />{t('share_whatsapp', settings.language)}</Button> */}
       </div>
 
       <div className="bg-card border rounded-xl overflow-hidden shadow-lg max-w-[210mm] mx-auto">

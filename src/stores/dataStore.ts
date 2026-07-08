@@ -102,7 +102,7 @@ interface DataState {
   addInvoice: (inv: Partial<Invoice> & Pick<Invoice, 'customerId' | 'items'>) => Promise<string>;
   updateInvoice: (id: string, inv: Partial<Invoice>) => Promise<void>;
   deleteInvoice: (id: string) => Promise<void>;
-  fetchInvoice: (id: string) => Promise<Invoice | null>;
+  fetchInvoice: (id: string, options?: { force?: boolean }) => Promise<Invoice | null>;
   addPayment: (invoiceId: string, payment: Omit<PaymentRecord, 'id'>) => Promise<void>;
 }
 
@@ -181,7 +181,7 @@ export const useDataStore = create<DataState>((set, get) => ({
       };
 
       const res = await api.post('/customers', payload);
-      const data = res.data?.data || res.data || res;
+      const data = (res && typeof res === 'object' && 'success' in res) ? (res as any).data : (res as any)?.data ?? res;
       const newCustomer = { ...c, ...data, created_at: data.created_at || new Date().toISOString() };
       set(s => ({ customers: [...s.customers, newCustomer] }));
       return data.id;
@@ -211,7 +211,7 @@ export const useDataStore = create<DataState>((set, get) => ({
       expenseDate: e.date, // backend expects expenseDate (ISO)
     };
     const res = await api.post('/expenses', payload);
-    const raw = res.data?.data || res.data || res;
+    const raw = (res && typeof res === 'object' && 'success' in res) ? (res as any).data : (res as any)?.data ?? res;
     const data: Expense = {
       id: String(raw.id),
       category: String(raw.category ?? ''),
@@ -230,7 +230,7 @@ export const useDataStore = create<DataState>((set, get) => ({
       delete payload.date;
     }
     const res = await api.patch(`/expenses/${id}`, payload);
-    const raw = res.data?.data || res.data || res;
+    const raw = (res && typeof res === 'object' && 'success' in res) ? (res as any).data : (res as any)?.data ?? res;
     const data: Partial<Expense> = {
       category: raw.category ?? e.category,
       amount: raw.amount ?? e.amount,
@@ -252,12 +252,12 @@ export const useDataStore = create<DataState>((set, get) => ({
 
   addProduct: async (p) => {
     const res = await api.post('/products', p);
-    const data = res.data?.data || res.data || res;
+    const data = (res && typeof res === 'object' && 'success' in res) ? (res as any).data : (res as any)?.data ?? res;
     set(s => ({ products: [...s.products, data] }));
   },
   updateProduct: async (id, p) => {
     const res = await api.patch(`/products/${id}`, p);
-    const data = res.data?.data || res.data || res;
+    const data = (res && typeof res === 'object' && 'success' in res) ? (res as any).data : (res as any)?.data ?? res;
     set(s => ({
       products: s.products.map(x => x.id === id ? { ...x, ...data } : x)
     }));
@@ -279,7 +279,7 @@ export const useDataStore = create<DataState>((set, get) => ({
     });
     
     const res = await api.post('/invoices', inv);
-    const data = res.data?.data || res.data || res;
+    const data = (res && typeof res === 'object' && 'success' in res) ? (res as any).data : (res as any)?.data ?? res;
     
     console.log('[dataStore] Invoice created, ID:', data.id);
     
@@ -310,7 +310,7 @@ export const useDataStore = create<DataState>((set, get) => ({
   addPayment: async (invoiceId, payment) => {
     await api.post(`/invoices/${invoiceId}/payments`, payment);
     const res = await api.get(`/invoices/${invoiceId}`);
-    const data = res.data?.data || res.data || res;
+    const data = (res && typeof res === 'object' && 'success' in res) ? (res as any).data : (res as any)?.data ?? res;
     const fullInvoice = {
       ...data.invoice,
       items: data.items,
@@ -320,19 +320,31 @@ export const useDataStore = create<DataState>((set, get) => ({
       invoices: s.invoices.map(x => x.id === invoiceId ? fullInvoice : x)
     }));
   },
-  fetchInvoice: async (id) => {
+  fetchInvoice: async (id, options?: { force?: boolean }) => {
     try {
-      // Check if invoice already exists with items
       const existing = get().invoices.find(x => x.id === id);
-      if (existing && existing.items && existing.items.length >= 0) {
+      // Only skip fetch when we already have line items (length check must be > 0; >= 0 was always true)
+      if (
+        !options?.force &&
+        existing &&
+        Array.isArray(existing.items) &&
+        existing.items.length > 0
+      ) {
         return existing;
       }
 
       const res = await api.get(`/invoices/${id}`);
       const invoice = res.data || res;
       // The backend returns { invoice, items, payments } for getById/getWithItems
-      // We need to merge them into the Invoice interface the frontend uses
-      const items = invoice.items || [];
+      const itemsRaw = invoice.items || [];
+      const items: InvoiceItem[] = itemsRaw.map((item: Record<string, unknown>) => ({
+        ...item,
+        productName: String(item.productName ?? item.product_name ?? ''),
+        quantity: Number(item.quantity ?? 0),
+        price: Number(item.price ?? item.unitPrice ?? item.unit_price ?? 0),
+        scan: Number(item.scan ?? item.scanPrice ?? item.scan_price ?? 0),
+        total: Number(item.total ?? item.totalPrice ?? item.total_price ?? 0),
+      }));
       
       // Calculate actual subtotal from items
       const calculatedSubtotal = items.reduce((sum: number, item: any) => 

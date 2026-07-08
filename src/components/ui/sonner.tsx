@@ -10,13 +10,35 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      position="top-right"
+      closeButton
+      richColors
+      expand
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            [
+              // Base (modern “glass”)
+              "group toast",
+              "group-[.toaster]:bg-background/80 group-[.toaster]:backdrop-blur-xl",
+              "group-[.toaster]:text-foreground",
+              "group-[.toaster]:border group-[.toaster]:border-border/60",
+              "group-[.toaster]:shadow-xl group-[.toaster]:shadow-black/5 dark:group-[.toaster]:shadow-black/30",
+              "rounded-xl",
+              // Layout
+              "gap-2 p-4",
+              // Accent by type
+              "data-[type=success]:border-emerald-500/30 data-[type=success]:bg-emerald-500/10",
+              "data-[type=error]:border-destructive/35 data-[type=error]:bg-destructive/10",
+              "data-[type=warning]:border-amber-500/35 data-[type=warning]:bg-amber-500/10",
+              "data-[type=info]:border-sky-500/30 data-[type=info]:bg-sky-500/10",
+            ].join(" "),
+          title: "font-semibold tracking-tight",
+          description: "text-sm leading-snug text-muted-foreground",
+          actionButton:
+            "bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-3",
+          cancelButton:
+            "bg-muted text-muted-foreground hover:bg-muted/80 rounded-lg px-3",
         },
       }}
       {...props}

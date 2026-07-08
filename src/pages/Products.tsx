@@ -37,7 +37,7 @@ export default function Products() {
     setOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) {
       toast.error('Name is required');
       return;
@@ -47,22 +47,28 @@ export default function Products() {
       return;
     }
 
-    if (editing) {
-      updateProduct(editing.id, {
-        name: form.name.trim(),
-        price: Number(form.price),
-        description: form.description || null,
-      });
-      toast.success('Updated');
-    } else {
-      addProduct({
-        name: form.name.trim(),
-        price: Number(form.price),
-        description: form.description || null,
-      });
-      toast.success('Product added');
+    try {
+      if (editing) {
+        await updateProduct(editing.id, {
+          name: form.name.trim(),
+          price: Number(form.price),
+          description: form.description || null,
+        });
+        toast.success('Updated');
+      } else {
+        await addProduct({
+          name: form.name.trim(),
+          price: Number(form.price),
+          description: form.description || null,
+        });
+        toast.success('Product added');
+      }
+      setOpen(false);
+    } catch (e: any) {
+      console.error('Failed to save product:', e);
+      toast.error(e?.message || 'Failed to save product');
+      return;
     }
-    setOpen(false);
   };
 
   const columns = [
@@ -101,11 +107,15 @@ export default function Products() {
       <ConfirmDialog
         open={deleteId !== null}
         onOpenChange={(v) => !v && setDeleteId(null)}
-        onConfirm={() => {
-          if (deleteId !== null) {
-            deleteProduct(deleteId);
+        onConfirm={async () => {
+          if (deleteId === null) return;
+          try {
+            await deleteProduct(deleteId);
             toast.success('Deleted');
             setDeleteId(null);
+          } catch (e: any) {
+            console.error('Failed to delete product:', e);
+            toast.error(e?.message || 'Failed to delete product');
           }
         }}
         title="Delete Product"

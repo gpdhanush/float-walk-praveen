@@ -12,6 +12,7 @@ import { ApiLoader } from "@/components/ApiLoader";
 import Login from "@/pages/Login";
 import { PerformanceMonitor } from "@/utils/performanceMonitor";
 import { applyThemeColor } from "@/lib/themeColors";
+import { PwaInstallDialog } from "@/components/pwa/PwaInstallDialog";
 
 // Lazy load pages for faster navigation
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
@@ -120,6 +121,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AppContent />
+        <PwaInstallDialog />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
