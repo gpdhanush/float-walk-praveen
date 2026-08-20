@@ -11,6 +11,9 @@ import { uploadRoutes } from './upload.routes.js';
 import { webAdminRoutes } from './webAdmin.routes.js';
 import { webBusinessSettingsRoutes } from './webBusinessSettings.routes.js';
 import { webPublicRoutes } from './webPublic.routes.js';
+import { createAnalyticsRoutes } from './analytics.routes.js';
+import { AnalyticsController } from '../controllers/AnalyticsController.js';
+import { authService, analyticsUseCases } from '../../container.js';
 
 export const routes = Router();
 
@@ -26,3 +29,4 @@ routes.use('/upload', uploadRoutes);
 routes.use('/web', webPublicRoutes);
 routes.use('/web-admin', webAdminRoutes);
 routes.use('/web-settings', webBusinessSettingsRoutes);
+routes.use('/analytics', createAnalyticsRoutes(new AnalyticsController(analyticsUseCases), authService));

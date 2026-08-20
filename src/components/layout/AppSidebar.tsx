@@ -62,7 +62,7 @@ export function AppSidebar() {
                 key={link.to}
                 to={link.to}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium',
+                  'flex items-center gap-3 px-4 py-2.5 rounded-[5px] text-sm font-medium',
                   isActive
                     ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-md'
                     : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:transition-colors hover:duration-150'
@@ -74,19 +74,19 @@ export function AppSidebar() {
             );
           })}
           {user?.role === 'admin' && <div className="pt-2">
-            <button onClick={() => setWebExpanded((value) => !value)} className="flex items-center justify-between w-full gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+            <button onClick={() => setWebExpanded((value) => !value)} className="flex items-center justify-between w-full gap-3 px-4 py-2.5 rounded-[5px] text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
               <span className="flex items-center gap-3"><Globe className="w-4 h-4" />Web</span><ChevronDown className={cn('w-4 h-4 transition-transform', webExpanded && 'rotate-180')} />
             </button>
             {webExpanded && <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-2">
-              {[['enquiries', ClipboardList, 'Enquiries'], ['appointments', CalendarDays, 'Appointments'], ['testimonials', Star, 'Testimonials'], ['gallery', Images, 'Gallery'], ['services', ListChecks, 'Services'], ['store-status', Store, 'Store status'], ['hours', Clock3, 'Business hours']].map(([key, Icon, label]) => <Link key={String(key)} to={String(key) === 'store-status' || String(key) === 'hours' ? `/web-settings/${key}` : `/web/${key}`} className={cn('flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium', location.pathname === `/web/${key}` || location.pathname === `/web-settings/${key}` ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground')}><Icon className="w-3.5 h-3.5" />{String(label)}</Link>)}
+              {[['enquiries', ClipboardList, 'Enquiries'], ['appointments', CalendarDays, 'Appointments'], ['testimonials', Star, 'Testimonials'], ['gallery', Images, 'Gallery'], ['services', ListChecks, 'Services'], ['store-status', Store, 'Store status'], ['hours', Clock3, 'Business hours']].map(([key, Icon, label]) => <Link key={String(key)} to={String(key) === 'store-status' || String(key) === 'hours' ? `/web-settings/${key}` : `/web/${key}`} className={cn('flex items-center gap-2 px-3 py-2 rounded-[5px] text-xs font-medium', location.pathname === `/web/${key}` || location.pathname === `/web-settings/${key}` ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground')}><Icon className="w-3.5 h-3.5" />{String(label)}</Link>)}
             </div>}
           </div>}
         </nav>
 
         <div className="p-4 border-t border-sidebar-border">
-          <button
+            <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-destructive/20 hover:text-destructive w-full transition-colors"
+            className="flex items-center gap-3 px-4 py-2.5 rounded-[5px] text-sm font-medium text-sidebar-foreground/70 hover:bg-destructive/20 hover:text-destructive w-full transition-colors"
           >
             <LogOut className="w-4 h-4" />
             {t('logout', language)}

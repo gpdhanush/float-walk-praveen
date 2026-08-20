@@ -27,6 +27,7 @@ export const config = {
   googleBusiness: {
     clientId: process.env.GOOGLE_CLIENT_ID ?? '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+    redirectUri: process.env.GOOGLE_REDIRECT_URI ?? `http://localhost:${process.env.PORT ?? '3001'}/auth/google/callback`,
     refreshToken: process.env.GOOGLE_REFRESH_TOKEN ?? '',
     locationId: process.env.GOOGLE_BUSINESS_LOCATION_ID ?? '',
   },
@@ -36,5 +37,13 @@ export const config = {
   pagination: {
     defaultLimit: 10,
     maxLimit: 100,
+  },
+  analytics: {
+    enabled: process.env.ANALYTICS_ENABLED === 'true',
+    deduplicationMinutes: parseInt(process.env.ANALYTICS_DEDUPLICATION_MINUTES ?? '30', 10),
+    trackAdmin: process.env.ANALYTICS_TRACK_ADMIN === 'true',
+    publicCountEnabled: process.env.ANALYTICS_PUBLIC_COUNT_ENABLED === 'true',
+    rateLimitPerMinute: parseInt(process.env.ANALYTICS_RATE_LIMIT_PER_MINUTE ?? '60', 10),
+    cacheTtlSeconds: parseInt(process.env.ANALYTICS_CACHE_TTL_SECONDS ?? '60', 10),
   },
 } as const;

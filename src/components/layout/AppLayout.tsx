@@ -1,12 +1,15 @@
 import { SimpleSidebar } from './SimpleSidebar';
 import { AppHeader } from './AppHeader';
 import { Outlet } from 'react-router-dom';
+import { useState } from 'react';
 
 export function AppLayout() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
-      <SimpleSidebar />
-      <div className="ml-64">
+      <SimpleSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
+      <div className={sidebarCollapsed ? 'ml-20' : 'ml-64'}>
         <AppHeader />
         <main className="p-6">
           <Outlet />

@@ -5,7 +5,7 @@ import { t } from '@/lib/i18n';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, MoreVertical, Eye, Pencil, Trash2, Printer } from 'lucide-react';
+import { MoreVertical, Eye, Pencil, Trash2, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
@@ -62,7 +62,7 @@ export default function Invoices() {
     }},
     {
       key: 'status', header: t('status', language), render: (i: Invoice) => (
-        <Badge variant={
+        <Badge className="rounded-[5px] px-1.5 py-0 text-[10px] leading-4" variant={
           i.status === 'paid' ? 'default' : 
           i.status === 'partial' ? 'secondary' : 
           i.status === 'hold' ? 'outline' : 'destructive'
@@ -77,8 +77,8 @@ export default function Invoices() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">{t('invoices', language)}</h1>
-        <Button onClick={() => navigate('/invoices/new')} className="gap-2">
-          <Plus className="w-4 h-4" />{t('new_invoice', language)}
+        <Button onClick={() => navigate('/invoices/new')} size="sm" className="rounded-[5px] bg-primary text-primary-foreground shadow-none hover:bg-primary/90">
+          {t('new_invoice', language)}
         </Button>
       </div>
 

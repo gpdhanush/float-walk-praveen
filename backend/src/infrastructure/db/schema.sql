@@ -369,6 +369,52 @@ ALTER TABLE `payments`
 --
 ALTER TABLE `stock_logs`
   ADD CONSTRAINT `stock_logs_ibfk_1` FOREIGN KEY (`stock_item_id`) REFERENCES `stock_items` (`id`) ON DELETE CASCADE;
+
+-- =====================================================
+-- Analytics Tables
+-- =====================================================
+
+--
+-- Table structure for table `page_daily_analytics`
+--
+CREATE TABLE IF NOT EXISTS `page_daily_analytics` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `page_path` VARCHAR(512) NOT NULL COMMENT 'URL path (e.g. /services, /)',
+  `analytics_date` DATE NOT NULL COMMENT 'Date of analytics record (UTC)',
+  `total_views` INT NOT NULL DEFAULT 0 COMMENT 'Total page views for this page on this date',
+  `unique_views` INT NOT NULL DEFAULT 0 COMMENT 'Unique visitor count for this page on this date',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  UNIQUE KEY `page_daily_analytics_path_date_unique` (page_path, analytics_date),
+  KEY `page_daily_analytics_date_idx` (analytics_date),
+  KEY `page_daily_analytics_path_idx` (page_path)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `analytics_visitor_dedup`
+--
+CREATE TABLE IF NOT EXISTS `analytics_visitor_dedup` (
+  `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+  `visitor_id` CHAR(36) NOT NULL COMMENT 'Anonymous visitor UUID (no PII)',
+  `page_path` VARCHAR(512) NOT NULL COMMENT 'URL path',
+  `expires_at` DATETIME NOT NULL COMMENT 'Dedup record expiration time (UTC)',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  UNIQUE KEY `analytics_visitor_dedup_visitor_page_unique` (visitor_id, page_path),
+  KEY `analytics_visitor_dedup_expires_idx` (expires_at),
+  KEY `analytics_visitor_dedup_visitor_idx` (visitor_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Table structure for table `analytics_cache`
+--
+CREATE TABLE IF NOT EXISTS `analytics_cache` (
+  `cache_key` VARCHAR(255) PRIMARY KEY COMMENT 'Cache key',
+  `cache_data` JSON NOT NULL COMMENT 'Cached data as JSON',
+  `expires_at` DATETIME NOT NULL COMMENT 'Cache expiration time (UTC)',
+  `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  KEY `analytics_cache_expires_idx` (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

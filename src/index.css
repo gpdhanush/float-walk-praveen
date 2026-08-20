@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Libre+Franklin:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -24,14 +24,15 @@
     --muted: 220 15% 95%;
     --muted-foreground: 220 10% 46%;
 
-    --accent: 38 92% 55%;
-    --accent-foreground: 220 60% 12%;
+    --accent: 221.2 83.2% 53.3%;
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 220 15% 90%;
     --input: 220 15% 90%;
+    --field: 0 0% 97%;
     --ring: 220 60% 22%;
 
     --radius: 0.75rem;
@@ -72,14 +73,15 @@
     --muted: 220 25% 16%;
     --muted-foreground: 220 10% 55%;
 
-    --accent: 38 92% 55%;
-    --accent-foreground: 220 60% 8%;
+    --accent: 217.2 91.2% 59.8%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 220 25% 20%;
     --input: 220 25% 20%;
+    --field: 220 20% 15%;
     --ring: 38 92% 55%;
 
     --sidebar-background: 220 35% 6%;
@@ -109,7 +111,7 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Libre Franklin', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', sans-serif;

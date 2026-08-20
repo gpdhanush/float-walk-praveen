@@ -192,7 +192,7 @@ export default function Dashboard() {
 
       {/* 5 Stats Cards - 5px radius, modern */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="rounded-[5px] border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="glass-card p-5 transition-shadow hover:shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Revenue</p>
@@ -203,7 +203,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="rounded-[5px] border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="glass-card p-5 transition-shadow hover:shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Customers</p>
@@ -214,7 +214,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="rounded-[5px] border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="glass-card p-5 transition-shadow hover:shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Invoices</p>
@@ -225,7 +225,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="rounded-[5px] border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="glass-card p-5 transition-shadow hover:shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Expenses</p>
@@ -236,14 +236,14 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="rounded-[5px] border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="glass-card p-5 transition-shadow hover:shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Today&apos;s Expense</p>
-              <p className="text-xl font-bold mt-1 text-amber-600">₹{(Number(stats.todayExpense) || 0).toLocaleString('en-IN')}</p>
+              <p className="text-xl font-bold mt-1 text-primary">₹{(Number(stats.todayExpense) || 0).toLocaleString('en-IN')}</p>
             </div>
-            <div className="w-12 h-12 rounded-[5px] bg-amber-500/10 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-amber-600" />
+            <div className="w-12 h-12 rounded-[5px] bg-primary/10 flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-primary" />
             </div>
           </div>
         </div>
@@ -251,7 +251,7 @@ export default function Dashboard() {
 
       {/* Charts - 5px radius, modern */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-[5px] border border-border bg-card p-6 shadow-sm">
+        <div className="glass-card p-6">
           <CardHeader className="p-0 pb-4">
             <CardTitle className="text-base font-display flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
@@ -288,7 +288,7 @@ export default function Dashboard() {
           </CardContent>
         </div>
 
-        <div className="rounded-[5px] border border-border bg-card p-6 shadow-sm">
+        <div className="glass-card p-6">
           <CardHeader className="p-0 pb-4">
             <CardTitle className="text-base font-display flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-primary" />

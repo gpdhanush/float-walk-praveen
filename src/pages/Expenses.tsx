@@ -12,6 +12,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { DatePicker } from '@/components/ui/date-time-picker';
 
 const CATEGORIES = ['Rent', 'Salary', 'Electricity', 'Transport', 'Materials', 'Maintenance', 'Marketing', 'Other'];
 
@@ -88,14 +89,14 @@ export default function Expenses() {
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>{t('category', language)} *</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+              <select className="flex h-10 w-full rounded-[5px] border border-input bg-field px-3 py-2 text-sm" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
                 <option value="">Select</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>{t('amount', language)} *</Label><Input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: +e.target.value })} /></div>
-              <div className="space-y-2"><Label>{t('date', language)}</Label><Input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} /></div>
+              <div className="space-y-2"><Label>{t('date', language)}</Label><DatePicker value={form.date} onChange={date => setForm({ ...form, date })} /></div>
             </div>
             <div className="space-y-2"><Label>{t('description', language)}</Label><Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></div>
           </div>

@@ -9,6 +9,7 @@ import { routes } from './interfaces/routes/index.js';
 import { errorHandler } from './interfaces/middlewares/errorHandler.js';
 import { requestLogger } from './interfaces/middlewares/requestLogger.js';
 import { setupSwagger } from './config/swagger.js';
+import { googleRoutes } from './interfaces/routes/google.routes.js';
 
 export function createApp() {
   const app = express();
@@ -49,6 +50,7 @@ export function createApp() {
   });
 
   setupSwagger(app);
+  app.use('/auth/google', googleRoutes);
   app.use('/api', routes);
 
   app.use(errorHandler);

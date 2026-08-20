@@ -14,13 +14,16 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Libre Franklin', 'sans-serif'],
         display: ['Space Grotesk', 'sans-serif'],
         web: ['Arimo', 'sans-serif'],
+        franklin: ['Libre Franklin', 'sans-serif'],
+        mono: ['Geist Mono', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
+        field: "hsl(var(--field))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",

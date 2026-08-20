@@ -31,11 +31,19 @@ export default function CustomerForm() {
     address: '',
     notes: ''
   });
+  const [errors, setErrors] = useState<{ name?: string; mobile?: string }>({});
+
+  const updateField = (field: keyof typeof form, value: string) => {
+    setForm((current) => ({ ...current, [field]: field === 'name' ? value.toUpperCase() : value }));
+    if (field === 'name' || field === 'mobile') {
+      setErrors((current) => ({ ...current, [field]: undefined }));
+    }
+  };
 
   useEffect(() => {
     if (isEditMode && existingCustomer) {
       setForm({
-        name: existingCustomer.name || '',
+        name: (existingCustomer.name || '').toUpperCase(),
         mobile: existingCustomer.mobile || '',
         email: existingCustomer.email || '',
         whatsapp: existingCustomer.whatsapp || '',
@@ -48,8 +56,12 @@ export default function CustomerForm() {
   }, [isEditMode, existingCustomer]);
 
   const handleSave = async () => {
-    if (!form.name || !form.mobile) {
-      toast.error('Name and Mobile are required');
+    const nextErrors = {
+      name: form.name.trim() ? undefined : 'Name is required',
+      mobile: form.mobile.trim() ? undefined : 'Mobile is required',
+    };
+    setErrors(nextErrors);
+    if (nextErrors.name || nextErrors.mobile) {
       return;
     }
 
@@ -90,21 +102,27 @@ export default function CustomerForm() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t('name', language)} *</Label>
+              <Label>{t('name', language)} <span className="text-destructive">*</span></Label>
               <Input 
                 value={form.name} 
-                onChange={e => setForm({ ...form, name: e.target.value })} 
+                onChange={e => updateField('name', e.target.value)} 
                 placeholder="Full Name"
+                aria-invalid={!!errors.name}
+                className="bg-transparent uppercase"
               />
+              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
             <div className="space-y-2">
-              <Label>{t('mobile', language)} *</Label>
+              <Label>{t('mobile', language)} <span className="text-destructive">*</span></Label>
               <Input 
                 value={form.mobile} 
-                onChange={e => setForm({ ...form, mobile: e.target.value })} 
+                onChange={e => updateField('mobile', e.target.value)} 
                 placeholder="Mobile Number"
                 maxLength={10}
+                aria-invalid={!!errors.mobile}
+                className="bg-transparent"
               />
+              {errors.mobile && <p className="text-sm text-destructive">{errors.mobile}</p>}
             </div>
           </div>
 
@@ -113,18 +131,20 @@ export default function CustomerForm() {
               <Label>{t('email', language)}</Label>
               <Input 
                 value={form.email} 
-                onChange={e => setForm({ ...form, email: e.target.value })} 
+                onChange={e => updateField('email', e.target.value)} 
                 type="email"
                 placeholder="Email Address"
+                className="bg-transparent"
               />
             </div>
             <div className="space-y-2">
               <Label>WhatsApp</Label>
               <Input 
                 value={form.whatsapp} 
-                onChange={e => setForm({ ...form, whatsapp: e.target.value })} 
+                onChange={e => updateField('whatsapp', e.target.value)} 
                 placeholder="WhatsApp Number"
                 maxLength={10}
+                className="bg-transparent"
               />
             </div>
           </div>
@@ -134,9 +154,10 @@ export default function CustomerForm() {
               <Label>Alternate Contact</Label>
               <Input 
                 value={form.altContact} 
-                onChange={e => setForm({ ...form, altContact: e.target.value })} 
+                onChange={e => updateField('altContact', e.target.value)} 
                 placeholder="Alt Contact Number"
                 maxLength={10}
+                className="bg-transparent"
               />
             </div>
             <div className="space-y-2">
@@ -145,7 +166,7 @@ export default function CustomerForm() {
                 value={form.gender} 
                 onValueChange={(value) => setForm({ ...form, gender: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-transparent">
                   <SelectValue placeholder="Select Gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -162,9 +183,10 @@ export default function CustomerForm() {
             <Label>{t('address', language)}</Label>
             <Textarea 
               value={form.address} 
-              onChange={e => setForm({ ...form, address: e.target.value })} 
+              onChange={e => updateField('address', e.target.value)} 
               placeholder="Full Address"
               rows={3}
+              className="bg-transparent"
             />
           </div>
 
@@ -172,17 +194,18 @@ export default function CustomerForm() {
             <Label>{t('notes', language)}</Label>
             <Textarea 
               value={form.notes} 
-              onChange={e => setForm({ ...form, notes: e.target.value })} 
+              onChange={e => updateField('notes', e.target.value)} 
               placeholder="Additional Notes"
+              className="bg-transparent"
             />
           </div>
         </CardContent>
         <CardFooter className="justify-end gap-2">
-          <Button variant="outline" onClick={() => navigate('/customers')}>
+          <Button variant="outline" onClick={() => navigate('/customers')} className="rounded-[5px] border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground">
             {t('cancel', language)}
           </Button>
-          <Button onClick={handleSave}>
-            {t('save', language)}
+          <Button onClick={handleSave} className="rounded-[5px]">
+            {isEditMode ? 'Update Details' : 'Save Details'}
           </Button>
         </CardFooter>
       </Card>

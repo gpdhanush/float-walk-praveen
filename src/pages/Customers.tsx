@@ -3,7 +3,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { t } from '@/lib/i18n';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -34,19 +34,17 @@ export default function Customers() {
   };
 
   const columns = [
-    { key: 'sno', header: 'S.No', render: (_: any, i: number) => i + 1 },
-    { key: 'name', header: t('name', language) },
+    { key: 'sno', header: 'S.No', align: 'center' as const, width: '100px', render: (_: any, i: number) => i + 1 },
+    { key: 'name', header: t('name', language), align: 'left' as const },
     { key: 'mobile', header: t('mobile', language) },
-    { key: 'email', header: t('email', language) },
-    { key: 'address', header: t('address', language) },
+    { key: 'address', header: t('address', language), align: 'left' as const },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">{t('customers', language)}</h1>
-        <Button onClick={openNew} className="gap-2">
-          <Plus className="w-4 h-4" />
+        <Button onClick={openNew} size="sm" className="rounded-[5px] bg-primary text-primary-foreground shadow-none hover:bg-primary/90">
           {t('new_customer', language)}
         </Button>
       </div>
@@ -54,15 +52,16 @@ export default function Customers() {
       <DataTable
         data={activeCustomers}
         columns={columns}
-        searchKeys={['name', 'mobile', 'email']}
+        searchKeys={['name', 'mobile', 'address']}
         exportFileName="customers"
+        defaultSortKey="name"
         actions={(c: Customer) => (
-          <div className="flex gap-1 justify-end">
+          <div className="flex justify-center gap-1">
             <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>
               <Pencil className="w-4 h-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => setDeleteId(c.id)}>
-              <Trash2 className="w-4 h-4 text-destructive" />
+            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive hover:text-destructive-foreground" onClick={() => setDeleteId(c.id)}>
+              <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         )}

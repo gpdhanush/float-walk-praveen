@@ -7,13 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Check, ChevronsUpDown, ArrowLeft, CalendarIcon } from 'lucide-react';
+import { Trash2, Check, ChevronsUpDown, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DatePicker } from '@/components/ui/date-time-picker';
 import {
   Command,
   CommandEmpty,
@@ -348,7 +348,7 @@ export default function InvoiceForm() {
         <h1 className="font-display text-2xl font-bold">{isEditMode ? 'Edit Invoice' : t('new_invoice', language)}</h1>
       </div>
 
-      <Card className="w-full">
+      <Card className="w-full [&_input]:bg-transparent [&_textarea]:bg-transparent [&_[role=combobox]]:bg-transparent">
         <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Invoice Details</CardTitle>
             <div className="flex gap-4">
@@ -515,36 +515,7 @@ export default function InvoiceForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
               <div className="space-y-2">
                 <Label>Invoice Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal h-10",
-                        !invoiceDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {invoiceDate ? (
-                        format(new Date(invoiceDate), 'dd-MMM-yyyy')
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={invoiceDate ? new Date(invoiceDate) : undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          setInvoiceDate(format(date, 'yyyy-MM-dd'));
-                        }
-                      }}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <DatePicker value={invoiceDate} placeholder="Pick a date" onChange={setInvoiceDate} />
               </div>
               <div className="space-y-2">
                 <Label>Bill Type</Label>
@@ -566,7 +537,7 @@ export default function InvoiceForm() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-base font-semibold">Items</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addItem}><Plus className="w-3 h-3 mr-1" /> Add Item</Button>
+                <Button type="button" size="sm" onClick={addItem} className="rounded-[5px] bg-primary text-primary-foreground shadow-none hover:bg-primary/90">Add Item</Button>
               </div>
               <div className="grid grid-cols-12 gap-3 text-xs font-medium text-muted-foreground px-2">
                 <div className="col-span-4">Items</div>
@@ -577,7 +548,7 @@ export default function InvoiceForm() {
                 <div className="col-span-1" />
               </div>
               {items.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-3 items-end bg-muted/20 p-2 rounded-lg border border-transparent hover:border-border transition-colors">
+                <div key={idx} className="grid grid-cols-12 gap-3 items-end bg-muted/20 p-2 rounded-[5px]">
                   <div className="col-span-4">
                     {customItemMode[idx] ? (
                       <div className="flex gap-2">
@@ -585,7 +556,7 @@ export default function InvoiceForm() {
                           placeholder="Other item name"
                           value={item.productName}
                           onChange={(e) => updateItem(idx, 'productName', e.target.value)}
-                          className="bg-background"
+                          className="bg-transparent"
                         />
                         <Button type="button" variant="outline" onClick={() => enableProductPickerForRow(idx)}>
                           Select
@@ -602,7 +573,7 @@ export default function InvoiceForm() {
                             variant="outline"
                             role="combobox"
                             className={cn(
-                              "w-full justify-between bg-background font-normal",
+                              "w-full justify-between rounded-[5px] bg-transparent font-normal",
                               !item.productName && "text-muted-foreground",
                             )}
                           >
@@ -612,13 +583,13 @@ export default function InvoiceForm() {
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[360px] p-0" align="start">
+                        <PopoverContent className="w-[360px] rounded-[5px] bg-white p-0 dark:bg-slate-900" align="start">
                           <Command>
                             <CommandInput placeholder="Search products..." />
                             <CommandList>
                               <CommandEmpty>No products found.</CommandEmpty>
                               <CommandGroup>
-                                <CommandItem value="__other__" onSelect={() => enableCustomItemForRow(idx)}>
+                                <CommandItem value="__other__" className="data-[selected=true]:!bg-transparent data-[selected='true']:!bg-transparent data-[selected=true]:!text-foreground dark:data-[selected=true]:!text-foreground" onSelect={() => enableCustomItemForRow(idx)}>
                                   Other (Custom item)
                                 </CommandItem>
                               </CommandGroup>
@@ -632,10 +603,10 @@ export default function InvoiceForm() {
                                       setCustomItemMode((s) => ({ ...s, [idx]: false }));
                                       setProductPickerOpen((s) => ({ ...s, [idx]: false }));
                                     }}
-                                    className="flex items-center justify-between"
+                                    className="group flex items-center justify-between data-[selected=true]:!bg-transparent data-[selected='true']:!bg-transparent data-[selected=true]:!text-foreground dark:data-[selected=true]:!text-foreground"
                                   >
                                     <span className="truncate">{p.name}</span>
-                                    <span className="text-muted-foreground ml-3 whitespace-nowrap">
+                                    <span className="ml-3 whitespace-nowrap text-muted-foreground group-data-[selected=true]:!text-muted-foreground group-data-[selected='true']:!text-muted-foreground">
                                       ₹{Number(p.price ?? 0).toLocaleString('en-IN')}
                                     </span>
                                   </CommandItem>
@@ -648,25 +619,27 @@ export default function InvoiceForm() {
                     )}
                   </div>
                   <div className="col-span-1">
-                    <Input type="number" placeholder="Qty" value={item.quantity} onChange={e => updateItem(idx, 'quantity', +e.target.value)} className="bg-background px-1 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                    <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="Qty" value={item.quantity} onChange={e => updateItem(idx, 'quantity', Number(e.target.value.replace(/\D/g, '')) || 0)} className="bg-transparent px-1 text-center" />
                   </div>
                   <div className="col-span-2">
-                    <Input type="number" placeholder="Price" value={item.price} onChange={e => updateItem(idx, 'price', +e.target.value)} className="bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                    <Input type="text" inputMode="numeric" pattern="[0-9]*" placeholder="Price" value={item.price} onChange={e => updateItem(idx, 'price', Number(e.target.value.replace(/\D/g, '')) || 0)} className="bg-transparent" />
                   </div>
                   <div className="col-span-2">
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       placeholder="Scan Amount"
                       value={Number(item.scan ?? 0)}
-                      onChange={e => updateItem(idx, 'scan', +e.target.value)}
-                      className="bg-background [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      onChange={e => updateItem(idx, 'scan', Number(e.target.value.replace(/\D/g, '')) || 0)}
+                      className="bg-transparent"
                     />
                   </div>
                   <div className="col-span-2">
                     <Input value={`₹${item.total.toLocaleString('en-IN')}`} readOnly className="bg-muted font-medium" />
                   </div>
                   <div className="col-span-1 flex justify-center">
-                    <Button variant="ghost" size="icon" onClick={() => removeItem(idx)} className="hover:bg-destructive/10 text-destructive transition-colors">
+                    <Button variant="ghost" size="icon" onClick={() => removeItem(idx)} className="text-destructive transition-colors hover:bg-destructive hover:text-destructive-foreground">
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -695,14 +668,14 @@ export default function InvoiceForm() {
                         </SelectContent>
                       </Select>
                   </div>
-                <div className="space-y-2"><Label>{t('advance', language)}</Label><Input type="number" value={Number(advancePaid) || 0} onChange={e => setAdvancePaid(Number(e.target.value) || 0)} className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" /></div>
+                <div className="space-y-2"><Label>{t('advance', language)}</Label><Input type="text" inputMode="numeric" pattern="[0-9]*" value={Number(advancePaid) || 0} onChange={e => setAdvancePaid(Number(e.target.value.replace(/\D/g, '')) || 0)} className="bg-transparent" /></div>
               </div>
             )}
 
             {!isGstBill && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border-t pt-4">
                 <div />
-                <div className="space-y-2"><Label>{t('advance', language)}</Label><Input type="number" value={Number(advancePaid) || 0} onChange={e => setAdvancePaid(Number(e.target.value) || 0)} className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" /></div>
+                <div className="space-y-2"><Label>{t('advance', language)}</Label><Input type="text" inputMode="numeric" pattern="[0-9]*" value={Number(advancePaid) || 0} onChange={e => setAdvancePaid(Number(e.target.value.replace(/\D/g, '')) || 0)} className="bg-transparent" /></div>
               </div>
             )}
 
@@ -740,8 +713,8 @@ export default function InvoiceForm() {
             <div className="space-y-2"><Label>{t('notes', language)}</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} /></div>
         </CardContent>
         <CardFooter className="justify-end gap-2">
-            <Button variant="outline" onClick={() => navigate('/invoices')}>{t('cancel', language)}</Button>
-            <Button onClick={handleSave}>{isEditMode ? 'Update Invoice' : 'Create Invoice'}</Button>
+            <Button variant="outline" onClick={() => navigate('/invoices')} className="rounded-[5px] border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground">{t('cancel', language)}</Button>
+            <Button onClick={handleSave} className="rounded-[5px] bg-primary text-primary-foreground shadow-none hover:bg-primary/90">{isEditMode ? 'Update Invoice' : 'Create Invoice'}</Button>
         </CardFooter>
       </Card>
     </div>

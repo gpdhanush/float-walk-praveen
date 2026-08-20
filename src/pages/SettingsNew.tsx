@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { userService } from '@/services/userService';
 import { uploadService } from '@/services/uploadService';
 import { t } from '@/lib/i18n';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -171,7 +171,9 @@ export default function SettingsNew() {
                 <Store className="w-5 h-5" />
                 Update Store Details
               </CardTitle>
+              <CardDescription>Manage the store information used throughout your billing documents.</CardDescription>
             </CardHeader>
+            <form onSubmit={(event) => { event.preventDefault(); void handleSaveStore(); }}>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -311,10 +313,11 @@ export default function SettingsNew() {
                 </div>
               </div>
 
-              <div className="flex justify-end">
-                <Button onClick={handleSaveStore} disabled={isSaving} size="lg">{isSaving ? 'Saving...' : 'Save Store Details'}</Button>
-              </div>
             </CardContent>
+            <CardFooter className="justify-end">
+              <Button type="submit" disabled={isSaving} size="lg">{isSaving ? 'Saving...' : 'Save Store Details'}</Button>
+            </CardFooter>
+            </form>
           </Card>
         </div>
 
@@ -326,7 +329,9 @@ export default function SettingsNew() {
                 <Lock className="w-5 h-5" />
                 Change Password
               </CardTitle>
+              <CardDescription>Update the password used to access the admin billing system.</CardDescription>
             </CardHeader>
+            <form onSubmit={(event) => { event.preventDefault(); void handleChangePassword(); }}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Current Password</Label>
@@ -344,11 +349,12 @@ export default function SettingsNew() {
                 <Input type="password" value={passwordForm.confirmPassword} onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} placeholder="Confirm new password" />
               </div>
 
-              <div className="flex justify-end">
-                <Button variant="outline" onClick={() => setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })} disabled={isChangingPassword}>Reset</Button>
-                <Button className="ml-2" onClick={handleChangePassword} disabled={isChangingPassword}>{isChangingPassword ? 'Changing...' : 'Change Password'}</Button>
-              </div>
             </CardContent>
+            <CardFooter className="justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })} disabled={isChangingPassword}>Reset</Button>
+              <Button type="submit" disabled={isChangingPassword}>{isChangingPassword ? 'Changing...' : 'Change Password'}</Button>
+            </CardFooter>
+            </form>
           </Card>
         </div>
       </div>

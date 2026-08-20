@@ -72,6 +72,8 @@ export function applyThemeColor(color: string, theme: 'light' | 'dark') {
   // Update primary colors
   root.style.setProperty('--primary', selectedColors.primary);
   root.style.setProperty('--primary-foreground', selectedColors.primaryForeground);
+  root.style.setProperty('--accent', selectedColors.primary);
+  root.style.setProperty('--accent-foreground', selectedColors.primaryForeground);
   
   // Update sidebar primary colors to match
   root.style.setProperty('--sidebar-primary', selectedColors.primary);
@@ -86,7 +88,6 @@ export const themeColorOptions = [
   { name: 'Blue', value: 'blue', color: 'bg-blue-500' },
   { name: 'Purple', value: 'purple', color: 'bg-purple-500' },
   { name: 'Green', value: 'green', color: 'bg-green-500' },
-  { name: 'Orange', value: 'orange', color: 'bg-orange-500' },
   { name: 'Red', value: 'red', color: 'bg-red-500' },
   { name: 'Pink', value: 'pink', color: 'bg-pink-500' },
 ];
