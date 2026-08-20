@@ -18,6 +18,8 @@ interface ImageCropDialogProps {
   imageSrc: string;
   onCropComplete: (croppedImageBlob: Blob) => void;
   onClose: () => void;
+  aspect?: number;
+  cropShape?: 'rect' | 'round';
 }
 
 export function ImageCropDialog({
@@ -25,6 +27,8 @@ export function ImageCropDialog({
   imageSrc,
   onCropComplete,
   onClose,
+  aspect = 1,
+  cropShape = 'round',
 }: ImageCropDialogProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -84,11 +88,11 @@ export function ImageCropDialog({
               crop={crop}
               zoom={zoom}
               rotation={rotation}
-              aspect={1}
+              aspect={aspect}
               onCropChange={onCropChange}
               onZoomChange={onZoomChange}
               onCropComplete={onCropCompleteCallback}
-              cropShape="round"
+              cropShape={cropShape}
               showGrid={false}
             />
           </div>

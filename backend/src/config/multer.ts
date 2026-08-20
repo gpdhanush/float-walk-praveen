@@ -6,6 +6,8 @@ import { mkdir } from 'fs/promises';
 // Ensure uploads directory exists
 const uploadsDir = path.join(process.cwd(), 'uploads', 'logos');
 mkdir(uploadsDir, { recursive: true }).catch(console.error);
+const galleryUploadsDir = path.join(process.cwd(), 'uploads', 'gallery');
+mkdir(galleryUploadsDir, { recursive: true }).catch(console.error);
 
 // Configure storage
 const storage = multer.diskStorage({
@@ -17,6 +19,11 @@ const storage = multer.diskStorage({
     const filename = `${randomUUID()}${ext}`;
     cb(null, filename);
   },
+});
+
+const galleryStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, galleryUploadsDir),
+  filename: (_req, _file, cb) => cb(null, `${randomUUID()}.upload`),
 });
 
 // File filter - only images
@@ -36,4 +43,10 @@ export const upload = multer({
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB max
   },
+});
+
+export const galleryUpload = multer({
+  storage: galleryStorage,
+  fileFilter,
+  limits: { fileSize: 3 * 1024 * 1024 },
 });

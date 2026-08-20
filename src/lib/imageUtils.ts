@@ -196,8 +196,8 @@ export async function getImageDimensions(file: File): Promise<{ width: number; h
 /**
  * Validate image file
  */
-export function validateImageFile(file: File): { valid: boolean; error?: string } {
-  const maxSize = 5 * 1024 * 1024; // 5MB
+export function validateImageFile(file: File, maxSizeMB = 5): { valid: boolean; error?: string } {
+  const maxSize = maxSizeMB * 1024 * 1024;
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
   if (!allowedTypes.includes(file.type)) {
@@ -205,7 +205,7 @@ export function validateImageFile(file: File): { valid: boolean; error?: string 
   }
 
   if (file.size > maxSize) {
-    return { valid: false, error: 'Image size must be less than 5MB' };
+    return { valid: false, error: `Image size must be less than ${maxSizeMB}MB` };
   }
 
   return { valid: true };

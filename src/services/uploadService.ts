@@ -53,6 +53,21 @@ export const uploadService = {
       throw error;
     }
   },
+  uploadGallery: async (file: Blob, filename: string = 'gallery.jpg'): Promise<{ url: string; size: number }> => {
+    const formData = new FormData();
+    formData.append('gallery', file, filename);
+    const response = await fetch(`${API_URL}/upload/gallery`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getAuthToken()}` },
+      body: formData,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Gallery upload failed' }));
+      throw new Error(error.error || error.message || 'Gallery upload failed');
+    }
+    const result = await response.json();
+    return result.data;
+  },
 };
 
 function getAuthToken(): string {

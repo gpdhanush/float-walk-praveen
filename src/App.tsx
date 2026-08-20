@@ -27,6 +27,8 @@ const Products = lazy(() => import("@/pages/Products"));
 const Reports = lazy(() => import("@/pages/Reports"));
 const Settings = lazy(() => import("@/pages/SettingsNew"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+const WebManagement = lazy(() => import("@/pages/WebManagement"));
+const WebBusinessSettings = lazy(() => import("@/pages/WebBusinessSettings"));
 
 const queryClient = new QueryClient();
 
@@ -103,6 +105,8 @@ function AppContent() {
             <>
               <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/web/:resource" element={<WebManagement />} />
+              <Route path="/web-settings/:section" element={<WebBusinessSettings />} />
             </>
           )}
           <Route path="*" element={<NotFound />} />

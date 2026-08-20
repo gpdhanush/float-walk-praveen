@@ -1,4 +1,5 @@
 import { useDataStore } from '@/stores/dataStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { t } from '@/lib/i18n';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,11 +8,20 @@ import { IndianRupee, TrendingUp, FileText, Users, ShoppingCart } from 'lucide-r
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
 import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useState, useMemo, useEffect } from 'react';
+import { api } from '@/services/api';
+import { ExternalLink } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
+
+type StoreStatus = { closed: boolean; reason: string };
 
 export default function Dashboard() {
   const { invoices, customers, expenses, isLoading, dataFetched, fetchData } = useDataStore();
   const { language } = useSettingsStore();
+  const user = useAuthStore((state) => state.user);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [storeStatus, setStoreStatus] = useState<StoreStatus | null>(null);
+  const [savingStoreStatus, setSavingStoreStatus] = useState(false);
 
   // Ensure data is loaded
   useEffect(() => {
@@ -20,6 +30,29 @@ export default function Dashboard() {
       fetchData();
     }
   }, [dataFetched, isLoading, fetchData]);
+
+  useEffect(() => {
+    api.get('/web-settings/status')
+      .then((response) => setStoreStatus(response?.data ?? null))
+      .catch(() => setStoreStatus(null));
+  }, []);
+
+  const toggleStoreStatus = async (closed: boolean) => {
+    if (!storeStatus || savingStoreStatus) return;
+    const previousStatus = storeStatus;
+    setStoreStatus({ ...storeStatus, closed });
+    setSavingStoreStatus(true);
+    try {
+      const response = await api.patch('/web-settings/status', { ...storeStatus, closed });
+      setStoreStatus(response?.data ?? { ...storeStatus, closed });
+      toast.success(closed ? 'Store closed' : 'Store opened');
+    } catch (error: any) {
+      setStoreStatus(previousStatus);
+      toast.error(error.message || 'Failed to update store status');
+    } finally {
+      setSavingStoreStatus(false);
+    }
+  };
 
   // API may return createdAt (camelCase) or created_at (snake_case)
   const getCreatedDate = (obj: { created_at?: string; createdAt?: string; date?: string }) =>
@@ -146,6 +179,16 @@ export default function Dashboard() {
           </SelectContent>
         </Select>
       </div>
+
+      {storeStatus && <section className={storeStatus.closed ? 'overflow-hidden rounded-[5px] border border-red-200 bg-red-50 shadow-sm dark:border-red-900/50 dark:bg-red-950/20' : 'rounded-[5px] border border-emerald-200 bg-emerald-50 shadow-sm dark:border-emerald-900/50 dark:bg-emerald-950/20'}>
+        <div className="flex flex-wrap items-center justify-between gap-5 p-5">
+          <div className="flex items-center gap-4">
+            {storeStatus.closed && <img src="/closed.png" alt="Store closed" className="h-20 w-24 object-contain" />}
+            <div><p className={storeStatus.closed ? 'text-xl font-bold text-red-700 dark:text-red-300' : 'text-xl font-bold text-emerald-700 dark:text-emerald-300'}>{storeStatus.closed ? 'Store is currently closed' : 'Store is open'}</p><p className={storeStatus.closed ? 'mt-1 text-sm text-red-800/80 dark:text-red-200/80' : 'mt-1 text-sm text-emerald-800/80 dark:text-emerald-200/80'}>{storeStatus.closed ? (storeStatus.reason || 'The store is temporarily closed.') : 'The store is accepting customers.'}</p></div>
+          </div>
+          {user?.role === 'admin' && <div className="flex items-center gap-4"><label className="text-sm font-medium">{storeStatus.closed ? 'Closed' : 'Open'}</label><Switch checked={storeStatus.closed} onCheckedChange={(closed) => void toggleStoreStatus(closed)} disabled={savingStoreStatus} aria-label="Toggle store open or closed" /><a href="/web-settings/store-status" className="inline-flex items-center justify-center gap-2 rounded-[5px] border border-current/20 px-4 py-2 text-sm font-medium hover:bg-black/5 dark:hover:bg-white/5"><span className="hidden sm:inline">Settings</span><ExternalLink className="h-4 w-4" /></a></div>}
+        </div>
+      </section>}
 
       {/* 5 Stats Cards - 5px radius, modern */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

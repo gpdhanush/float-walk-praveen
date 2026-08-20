@@ -14,6 +14,9 @@ import { ExpenseRepository } from './infrastructure/db/repositories/ExpenseRepos
 import { ProductRepository } from './infrastructure/db/repositories/ProductRepository.js';
 import { StoreSettingsRepository } from './infrastructure/db/repositories/StoreSettingsRepository.js';
 import { CodeSequenceRepository } from './infrastructure/db/repositories/CodeSequenceRepository.js';
+import { WebAdminRepository } from './infrastructure/db/repositories/WebAdminRepository.js';
+import { WebBusinessSettingsRepository } from './infrastructure/db/repositories/WebBusinessSettingsRepository.js';
+import { GoogleBusinessService } from './infrastructure/google/GoogleBusinessService.js';
 
 const userRepo = new UserRepository();
 const customerRepo = new CustomerRepository();
@@ -22,6 +25,9 @@ const expenseRepo = new ExpenseRepository();
 const productRepo = new ProductRepository();
 const storeSettingsRepo = new StoreSettingsRepository();
 const codeSequenceRepo = new CodeSequenceRepository();
+export const webAdminRepository = new WebAdminRepository();
+export const webBusinessSettingsRepository = new WebBusinessSettingsRepository();
+export const googleBusinessService = new GoogleBusinessService();
 
 export const authService = new AuthService(userRepo);
 export const codeGenerator = new CodeGeneratorService(codeSequenceRepo);

@@ -186,6 +186,35 @@ CREATE TABLE `stock_logs` (
   `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Website operations settings
+CREATE TABLE `web_store_status` (
+  `id` tinyint unsigned NOT NULL DEFAULT 1,
+  `closed` tinyint(1) NOT NULL DEFAULT 0,
+  `reason` varchar(500) NOT NULL DEFAULT '',
+  `updated_at` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `web_store_status` (`id`, `closed`, `reason`) VALUES (1, 0, 'We are closed today. Please call us for urgent help.');
+
+CREATE TABLE `web_business_hours` (
+  `id` tinyint unsigned NOT NULL AUTO_INCREMENT,
+  `day` varchar(9) NOT NULL,
+  `is_closed` tinyint(1) NOT NULL DEFAULT 0,
+  `open_time` time DEFAULT NULL,
+  `close_time` time DEFAULT NULL,
+  `sort_order` tinyint unsigned NOT NULL,
+  `updated_at` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_web_business_hours_day` (`day`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `web_business_hours` (`day`, `is_closed`, `open_time`, `close_time`, `sort_order`) VALUES
+('MONDAY', 0, '09:00:00', '18:00:00', 1), ('TUESDAY', 0, '09:00:00', '18:00:00', 2),
+('WEDNESDAY', 0, '09:00:00', '18:00:00', 3), ('THURSDAY', 0, '10:00:00', '20:00:00', 4),
+('FRIDAY', 0, '09:00:00', '18:00:00', 5), ('SATURDAY', 0, '09:00:00', '18:00:00', 6),
+('SUNDAY', 1, NULL, NULL, 7);
+
 -- --------------------------------------------------------
 
 --

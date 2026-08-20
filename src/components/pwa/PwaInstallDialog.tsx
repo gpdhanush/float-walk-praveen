@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,24 +16,72 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
+const DISMISSED_KEY = "pwa_install_dismissed_v1";
+
+function isDismissed() {
+  try {
+    return localStorage.getItem(DISMISSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markDismissed() {
+  try {
+    localStorage.setItem(DISMISSED_KEY, "1");
+  } catch {
+    // ignore quota / private mode
+  }
+}
+
+function isStandalone() {
+  const mq = window.matchMedia?.("(display-mode: standalone)");
+  // iOS Safari
+  const iosStandalone = (navigator as any).standalone === true;
+  return !!mq?.matches || iosStandalone;
+}
+
 export function PwaInstallDialog() {
   const [open, setOpen] = useState(false);
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(
     null,
   );
-  const [installed, setInstalled] = useState(false);
+  const [installed, setInstalled] = useState(() =>
+    typeof window !== "undefined" ? isStandalone() : false,
+  );
+  const [dismissed, setDismissed] = useState(() =>
+    typeof window !== "undefined" ? isDismissed() : false,
+  );
+  const shownOnceRef = useRef(false);
 
-  const canInstall = useMemo(() => !!deferred && !installed, [deferred, installed]);
+  const canInstall = useMemo(
+    () => !!deferred && !installed && !dismissed,
+    [deferred, installed, dismissed],
+  );
+
+  const dismiss = () => {
+    markDismissed();
+    setDismissed(true);
+    setOpen(false);
+    setDeferred(null);
+  };
 
   useEffect(() => {
+    if (installed || dismissed || isDismissed()) return;
+
     const onBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
+      if (isDismissed() || installed || shownOnceRef.current) return;
+
       setDeferred(e as BeforeInstallPromptEvent);
+      shownOnceRef.current = true;
       setOpen(true);
     };
 
     const onAppInstalled = () => {
+      markDismissed();
       setInstalled(true);
+      setDismissed(true);
       setDeferred(null);
       setOpen(false);
     };
@@ -41,15 +89,11 @@ export function PwaInstallDialog() {
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     window.addEventListener("appinstalled", onAppInstalled);
 
-    // If already installed (display-mode standalone), don't show.
-    const mq = window.matchMedia?.("(display-mode: standalone)");
-    if (mq?.matches) setInstalled(true);
-
     return () => {
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.removeEventListener("appinstalled", onAppInstalled);
     };
-  }, []);
+  }, [installed, dismissed]);
 
   const handleInstall = async () => {
     if (!deferred) return;
@@ -57,7 +101,12 @@ export function PwaInstallDialog() {
     try {
       const choice = await deferred.userChoice;
       if (choice.outcome === "accepted") {
+        markDismissed();
+        setDismissed(true);
         setOpen(false);
+      } else {
+        // User cancelled browser install prompt → treat as dismissed
+        dismiss();
       }
     } finally {
       setDeferred(null);
@@ -67,7 +116,13 @@ export function PwaInstallDialog() {
   if (!canInstall) return null;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) dismiss();
+        else setOpen(true);
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Install Float Walk</DialogTitle>
@@ -85,7 +140,7 @@ export function PwaInstallDialog() {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={dismiss}>
             Not now
           </Button>
           <Button onClick={handleInstall} className="gap-2">
@@ -97,4 +152,3 @@ export function PwaInstallDialog() {
     </Dialog>
   );
 }
-

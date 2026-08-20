@@ -6,7 +6,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Users, FileText,
-  Receipt, BarChart3, Settings, LogOut, Package
+  Receipt, BarChart3, Settings, LogOut, Package, Globe, ChevronDown, ClipboardList, CalendarDays, Star, Images, ListChecks, Store, Clock3
 } from 'lucide-react';
 import { ConfirmDialog } from '../shared/ConfirmDialog';
 
@@ -37,6 +37,7 @@ export function AppSidebar() {
   const location = useLocation();
   
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [webExpanded, setWebExpanded] = useState(location.pathname.startsWith('/web'));
   
   const links = user?.role === 'admin' ? adminLinks : employeeLinks;
 
@@ -72,6 +73,14 @@ export function AppSidebar() {
               </Link>
             );
           })}
+          {user?.role === 'admin' && <div className="pt-2">
+            <button onClick={() => setWebExpanded((value) => !value)} className="flex items-center justify-between w-full gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+              <span className="flex items-center gap-3"><Globe className="w-4 h-4" />Web</span><ChevronDown className={cn('w-4 h-4 transition-transform', webExpanded && 'rotate-180')} />
+            </button>
+            {webExpanded && <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-2">
+              {[['enquiries', ClipboardList, 'Enquiries'], ['appointments', CalendarDays, 'Appointments'], ['testimonials', Star, 'Testimonials'], ['gallery', Images, 'Gallery'], ['services', ListChecks, 'Services'], ['store-status', Store, 'Store status'], ['hours', Clock3, 'Business hours']].map(([key, Icon, label]) => <Link key={String(key)} to={String(key) === 'store-status' || String(key) === 'hours' ? `/web-settings/${key}` : `/web/${key}`} className={cn('flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium', location.pathname === `/web/${key}` || location.pathname === `/web-settings/${key}` ? 'bg-sidebar-primary text-sidebar-primary-foreground' : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground')}><Icon className="w-3.5 h-3.5" />{String(label)}</Link>)}
+            </div>}
+          </div>}
         </nav>
 
         <div className="p-4 border-t border-sidebar-border">
