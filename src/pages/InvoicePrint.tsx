@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDataStore } from '@/stores/dataStore';
+import type { Invoice } from '@/stores/dataStore';
 import { InvoicePrintContent } from '@/components/shared/InvoicePrintContent';
 
 export default function InvoicePrint() {
   const { id } = useParams();
-  const { invoices, fetchInvoice } = useDataStore();
-  const inv = invoices.find(i => i.id === id);
+  const { fetchInvoice } = useDataStore();
+  const [printInvoice, setPrintInvoice] = useState<Invoice | null>(null);
   const didSchedulePrint = useRef(false);
   const [loadState, setLoadState] = useState<'loading' | 'ready' | 'missing'>('loading');
 
@@ -18,6 +19,7 @@ export default function InvoicePrint() {
     let cancelled = false;
     didSchedulePrint.current = false;
     setLoadState('loading');
+    setPrintInvoice(null);
 
     void fetchInvoice(id, { force: true }).then((result) => {
       if (cancelled) return;
@@ -25,6 +27,7 @@ export default function InvoicePrint() {
         setLoadState('missing');
         return;
       }
+      setPrintInvoice(result);
       setLoadState('ready');
 
       if (didSchedulePrint.current) return;
@@ -57,15 +60,15 @@ export default function InvoicePrint() {
     );
   }
 
-  if (loadState === 'missing' || !inv) {
+  if (loadState === 'missing' || !printInvoice) {
     return (
       <div className="p-8 text-center text-muted-foreground">Invoice not found</div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white flex justify-center">
-      <InvoicePrintContent invoice={inv} />
+    <div className="bg-white flex justify-center">
+      <InvoicePrintContent invoice={printInvoice} />
     </div>
   );
 }

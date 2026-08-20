@@ -4,10 +4,11 @@ import { t } from '@/lib/i18n';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { PageTitle } from '@/components/shared/PageTitle';
 
 export default function Customers() {
   const { customers, deleteCustomer } = useDataStore();
@@ -43,7 +44,7 @@ export default function Customers() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold">{t('customers', language)}</h1>
+        <PageTitle>{t('customers', language)}</PageTitle>
         <Button onClick={openNew} size="sm" className="rounded-[5px] bg-primary text-primary-foreground shadow-none hover:bg-primary/90">
           {t('new_customer', language)}
         </Button>

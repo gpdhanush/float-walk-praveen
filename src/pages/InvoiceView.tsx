@@ -8,7 +8,8 @@ import { Printer, Download, MessageCircle, ArrowLeft, Edit, Trash2 } from 'lucid
 import { format } from 'date-fns';
 import { InvoicePrintContent } from '@/components/shared/InvoicePrintContent';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
+import { PageTitle } from '@/components/shared/PageTitle';
 
 export default function InvoiceView() {
   const { id } = useParams();
@@ -45,7 +46,7 @@ export default function InvoiceView() {
 
   const formattedDate = (() => { try { return format(new Date(inv.date || (inv as any).createdAt), 'dd-MMM-yyyy'); } catch { return inv.date; } })();
 
-  const handlePrint = () => window.open(`/invoice/print/${inv.id}`, '_blank');
+  const handlePrint = () => window.open(`/invoice/print/${inv.id}`, '_blank', 'noopener,noreferrer');
 
   const handlePdf = async () => {
     const { default: html2canvas } = await import('html2canvas');
@@ -127,8 +128,7 @@ export default function InvoiceView() {
         `Total Amount: Rs.${inv.grandTotal.toLocaleString('en-IN')}\n` +
         `Paid: Rs.${inv.advancePaid.toLocaleString('en-IN')}\n` +
         `Balance Due: Rs.${inv.balanceDue.toLocaleString('en-IN')}\n\n` +
-        `_The invoice PDF has been downloaded to your device. Please attach it to this chat and send._\n\n` +
-        `Thank you for your business!`
+        `_The invoice PDF has been downloaded to your device. Please attach it to this chat and send._\n\n`
       );
 
       // Best-effort: share the PDF file directly (works on most mobile browsers).
@@ -161,16 +161,16 @@ export default function InvoiceView() {
     <div className="space-y-4">
       <div className="flex items-center gap-2 no-print">
         <Button variant="ghost" size="icon" onClick={() => navigate('/invoices')}><ArrowLeft className="w-4 h-4" /></Button>
-        <h1 className="font-display text-xl font-bold flex-1">{inv.invoiceNumber}</h1>
-        <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2"><Edit className="w-4 h-4" />Edit</Button>
-        <Button variant="outline" size="sm" onClick={() => setShowDeleteDialog(true)} className="gap-2 text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" />Delete</Button>
+        <PageTitle className="flex-1">{inv.invoiceNumber}</PageTitle>
+        <Button variant="outline" size="sm" onClick={handleEdit} className="gap-2 rounded-[5px] border-primary text-primary hover:bg-primary hover:text-primary-foreground"><Edit className="w-4 h-4" />Edit</Button>
+        <Button variant="outline" size="sm" onClick={() => setShowDeleteDialog(true)} className="gap-2 rounded-[5px] border-red-600 text-red-600 hover:bg-red-600 hover:text-white"><Trash2 className="w-4 h-4" />Delete</Button>
         <div className="h-6 w-px bg-border" />
-        <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2"><Printer className="w-4 h-4" />{t('print', settings.language)}</Button>
+        <Button size="sm" onClick={handlePrint} className="gap-2 rounded-[5px] bg-primary text-primary-foreground hover:bg-primary/90"><Printer className="w-4 h-4" />{t('print', settings.language)}</Button>
         {/* <Button variant="outline" size="sm" onClick={handlePdf} className="gap-2"><Download className="w-4 h-4" />{t('download_pdf', settings.language)}</Button> */}
         {/* <Button variant="outline" size="sm" onClick={handleWhatsApp} className="gap-2"><MessageCircle className="w-4 h-4" />{t('share_whatsapp', settings.language)}</Button> */}
       </div>
 
-      <div className="bg-card border rounded-xl overflow-hidden shadow-lg max-w-[210mm] mx-auto">
+      <div className="bg-card border rounded-[5px] overflow-hidden shadow-lg max-w-[210mm] mx-auto">
          <InvoicePrintContent invoice={inv} />
       </div>
 

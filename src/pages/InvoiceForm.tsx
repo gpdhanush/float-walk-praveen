@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Trash2, Check, ChevronsUpDown, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
+import { PageTitle } from '@/components/shared/PageTitle';
 import { format } from 'date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -55,7 +56,7 @@ export default function InvoiceForm() {
     { productName: '', quantity: 1, scan: 0, price: 0, total: 0 },
   ]);
   const [isGstBill, setIsGstBill] = useState(true);
-  const [gst, setGst] = useState(gstPercent);
+  const [gst, setGst] = useState(gstPercent ?? 18);
   const [advancePaid, setAdvancePaid] = useState(0);
   const [notes, setNotes] = useState('');
   const [type, setType] = useState<'Invoice' | 'Quotation' | 'Advance Payment'>('Invoice');
@@ -118,14 +119,14 @@ export default function InvoiceForm() {
     // Only update GST if not in edit mode or if user manually toggles
     // For edit mode, we loaded the initial GST. If user toggles, we follow the toggle.
     if (!isEditMode) {
-      setGst(isGstBill ? (gstPercent || 18) : 0); // Default to 18% if GST enabled
+      setGst(isGstBill ? (gstPercent ?? 18) : 0); // Default only when no saved value exists
     }
   }, [isGstBill, gstPercent, isEditMode]);
-  
+
   // When GST Bill is enabled, ensure GST % is set (default 18%)
   useEffect(() => {
     if (isGstBill && gst === 0 && !isEditMode) {
-      setGst(gstPercent || 18);
+      setGst(gstPercent ?? 18);
     }
   }, [isGstBill, gst, gstPercent, isEditMode]);
 
@@ -345,7 +346,7 @@ export default function InvoiceForm() {
         <Button variant="ghost" size="icon" onClick={() => navigate('/invoices')}>
             <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="font-display text-2xl font-bold">{isEditMode ? 'Edit Invoice' : t('new_invoice', language)}</h1>
+        <PageTitle>{isEditMode ? 'Edit Invoice' : t('new_invoice', language)}</PageTitle>
       </div>
 
       <Card className="w-full [&_input]:bg-transparent [&_textarea]:bg-transparent [&_[role=combobox]]:bg-transparent">
@@ -439,7 +440,7 @@ export default function InvoiceForm() {
                     }}
                   />
                   {customerSearchOpen && customerMobile && (
-                      <div className="absolute z-50 w-full bg-white dark:bg-gray-800 text-popover-foreground shadow-lg rounded-md border border-gray-200 dark:border-gray-700 mt-1 max-h-[200px] overflow-auto">
+                      <div className="absolute z-50 w-full bg-white dark:bg-gray-800 text-popover-foreground shadow-lg rounded-[5px] border border-gray-200 dark:border-gray-700 mt-1 max-h-[200px] overflow-auto">
                           {activeCustomers.filter(c => c.mobile.includes(customerMobile)).length > 0 ? (
                               activeCustomers.filter(c => c.mobile.includes(customerMobile)).map((c, idx) => (
                                   <div 

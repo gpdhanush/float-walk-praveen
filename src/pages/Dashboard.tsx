@@ -11,7 +11,8 @@ import { useState, useMemo, useEffect } from 'react';
 import { api } from '@/services/api';
 import { ExternalLink } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
+import { PageTitle } from '@/components/shared/PageTitle';
 
 type StoreStatus = { closed: boolean; reason: string };
 
@@ -163,9 +164,9 @@ export default function Dashboard() {
     <div className="space-y-6 pb-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        <PageTitle>
           {t('dashboard', language)}
-        </h1>
+        </PageTitle>
         <Select value={selectedYear} onValueChange={setSelectedYear}>
           <SelectTrigger className="w-[180px] rounded-[5px] border border-border">
             <SelectValue placeholder="Select Year" />
@@ -192,7 +193,7 @@ export default function Dashboard() {
 
       {/* 5 Stats Cards - 5px radius, modern */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="glass-card p-5 transition-shadow hover:shadow-lg">
+        <div className="glass-card border-emerald-300/70 bg-emerald-50/50 p-5 transition-shadow hover:shadow-lg dark:border-emerald-800 dark:bg-emerald-950/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Revenue</p>
@@ -203,7 +204,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="glass-card p-5 transition-shadow hover:shadow-lg">
+        <div className="glass-card border-sky-300/70 bg-sky-50/50 p-5 transition-shadow hover:shadow-lg dark:border-sky-800 dark:bg-sky-950/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Customers</p>
@@ -214,7 +215,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="glass-card p-5 transition-shadow hover:shadow-lg">
+        <div className="glass-card border-violet-300/70 bg-violet-50/50 p-5 transition-shadow hover:shadow-lg dark:border-violet-800 dark:bg-violet-950/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Invoices</p>
@@ -225,7 +226,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="glass-card p-5 transition-shadow hover:shadow-lg">
+        <div className="glass-card border-rose-300/70 bg-rose-50/50 p-5 transition-shadow hover:shadow-lg dark:border-rose-800 dark:bg-rose-950/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Expenses</p>
@@ -236,7 +237,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="glass-card p-5 transition-shadow hover:shadow-lg">
+        <div className="glass-card border-amber-300/70 bg-amber-50/50 p-5 transition-shadow hover:shadow-lg dark:border-amber-800 dark:bg-amber-950/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Today&apos;s Expense</p>
@@ -251,7 +252,7 @@ export default function Dashboard() {
 
       {/* Charts - 5px radius, modern */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass-card p-6">
+        <div className="glass-card border-sky-300/70 bg-sky-50/30 p-6 dark:border-sky-800 dark:bg-sky-950/15">
           <CardHeader className="p-0 pb-4">
             <CardTitle className="text-base font-display flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
@@ -288,7 +289,7 @@ export default function Dashboard() {
           </CardContent>
         </div>
 
-        <div className="glass-card p-6">
+        <div className="glass-card border-rose-300/70 bg-rose-50/30 p-6 dark:border-rose-800 dark:bg-rose-950/15">
           <CardHeader className="p-0 pb-4">
             <CardTitle className="text-base font-display flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-primary" />

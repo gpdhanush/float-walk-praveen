@@ -7,13 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { ImageCropDialog } from '@/components/shared/ImageCropDialog';
 import { WebDatePicker, WebSelect, WebTimePicker } from '@/components/web/WebFormControls';
 import { uploadService } from '@/services/uploadService';
 import { validateImageFile } from '@/lib/imageUtils';
 import { DataTable, type Column } from '@/components/shared/DataTable';
 import { format, isValid, parse } from 'date-fns';
+import { PageTitle } from '@/components/shared/PageTitle';
 
 type Field = { key: string; label: string; type?: 'text' | 'date' | 'time' | 'number' | 'textarea' | 'select' | 'checkbox'; options?: string[]; required?: boolean; placeholder?: string };
 type ResourceConfig = { title: string; description: string; fields: Field[] };
@@ -159,7 +160,7 @@ export default function WebManagement() {
 
   return <div className="font-web space-y-6">
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div><div className="flex items-center gap-2 text-sm text-muted-foreground"><Globe className="h-4 w-4" /> Website</div><h1 className="text-2xl font-display font-bold mt-1">{config.title}</h1><p className="text-muted-foreground mt-1">{config.description}</p></div>
+      <div><div className="flex items-center gap-2 text-sm text-muted-foreground"><Globe className="h-4 w-4" /> Website</div><PageTitle className="mt-1">{config.title}</PageTitle><p className="text-muted-foreground mt-1">{config.description}</p></div>
       {resource !== 'enquiries' && resource !== 'appointments' && <Button className="rounded-[5px]" onClick={beginCreate}><Plus className="h-4 w-4 mr-2" />Add record</Button>}
     </div>
 

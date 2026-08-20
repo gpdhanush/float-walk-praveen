@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast } from '@/components/ui/sonner';
+import { PageTitle } from '@/components/shared/PageTitle';
 
 export default function Settings() {
   const settings = useSettingsStore();
@@ -56,9 +57,9 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">
+      <PageTitle>
         {t("store_settings", settings.language)}
-      </h1>
+      </PageTitle>
       <Card className="shadow-md">
         <CardContent className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">

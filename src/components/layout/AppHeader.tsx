@@ -1,6 +1,7 @@
 import { useAuthStore } from '@/stores/authStore';
 import { useSettingsStore } from '@/stores/settingsStore';
-import { Moon, Sun, Globe, Palette } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Moon, Sun, Maximize, Minimize, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -18,9 +19,22 @@ export function AppHeader() {
   const setTheme = useSettingsStore(s => s.setTheme);
   const themeColor = useSettingsStore(s => s.themeColor);
   const updateSettings = useSettingsStore(s => s.updateSettings);
-  const language = useSettingsStore(s => s.language);
-  const setLanguage = useSettingsStore(s => s.setLanguage);
   const logoUrl = useSettingsStore(s => s.logoUrl);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await document.documentElement.requestFullscreen();
+    }
+  };
 
   const handleThemeColorChange = async (color: string) => {
     try {
@@ -39,12 +53,13 @@ export function AppHeader() {
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
-          size="sm"
-          onClick={() => setLanguage(language === 'en' ? 'ta' : 'en')}
-          className="gap-2 text-xs font-medium text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          size="icon"
+          onClick={() => void toggleFullscreen()}
+          aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          className="text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent"
         >
-          <Globe className="w-4 h-4" />
-          {language === 'en' ? 'தமிழ்' : 'EN'}
+          {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
         </Button>
         <Button
           variant="ghost"

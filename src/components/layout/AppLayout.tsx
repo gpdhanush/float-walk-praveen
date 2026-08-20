@@ -7,7 +7,7 @@ export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="app-shell min-h-screen bg-background">
       <SimpleSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
       <div className={sidebarCollapsed ? 'ml-20' : 'ml-64'}>
         <AppHeader />

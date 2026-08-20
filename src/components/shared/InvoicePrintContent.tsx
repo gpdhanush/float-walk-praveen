@@ -62,14 +62,15 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
       <style>{`
         @media print { 
           @page { margin: 20mm; size: A4; } 
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0 !important; } 
+          .app-shell { display: none !important; }
           #invoice-print { box-shadow: none !important; border: none !important; padding: 0 !important; width: 100% !important; max-width: none !important; min-height: 0 !important; }
           .no-print { display: none !important; }
         }
       `}</style>
       <div
         id="invoice-print"
-        className="bg-white p-10 w-full mx-auto"
+        className="bg-white p-10 w-full mx-auto rounded-[5px] border border-slate-200 print:min-h-0"
         style={{ maxWidth: "210mm", minHeight: "297mm" }}
       >
         {/* Modern Header */}
@@ -132,7 +133,7 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
 
             {/* Right: Invoice/Quotation Badge & Details */}
             <div className="text-right">
-              <div className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg mb-3">
+              <div className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-[5px] mb-3">
                 <h2 className="text-sm font-bold tracking-widest uppercase">
                   {inv.type || "INVOICE"}
                 </h2>
@@ -155,7 +156,7 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
         </div>
 
         {/* Bill To / Quotation For / Advance For */}
-        <div className="mb-6 bg-muted/30 p-4 rounded-lg">
+        <div className="mb-6 border border-primary/15 bg-primary/[0.04] p-4 rounded-[5px]">
           <p className="text-xs text-muted-foreground mb-2 font-bold uppercase tracking-wider">
             {inv.type === "Quotation"
               ? "QUOTATION FOR"
@@ -176,7 +177,7 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
         </div>
 
         {/* Items Table - 1px border, no radius */}
-        <table className="w-full text-xs mb-6 border-collapse border border-gray-400">
+        <table className="w-full text-xs mb-6 border-collapse border border-slate-300 rounded-[5px] overflow-hidden">
           <thead>
             <tr className="bg-primary text-primary-foreground">
               <th className="text-left p-2 border border-gray-400">
@@ -229,7 +230,7 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
         </table>
 
         {/* Totals - 1px border, 2 decimal places */}
-        <div className="ml-auto w-80 border border-gray-400">
+        <div className="ml-auto w-80 border border-slate-300 rounded-[5px] overflow-hidden">
           <div className="divide-y divide-gray-400 text-xs">
             <div className="flex justify-between items-center py-1.5 px-2">
               <span className="font-semibold">Invoice Total</span>
@@ -277,7 +278,7 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
         </div>
 
         {/* Amount in Words - 1px border */}
-        <div className="mt-4 py-2 px-3 border border-gray-400 bg-gray-50">
+        <div className="mt-4 py-2 px-3 border border-slate-300 bg-slate-50 rounded-[5px]">
           <p className="text-xs">
             <span className="font-semibold">Amount in Words: </span>
             <span className="font-bold">{numberToWords(isPaid ? grandTotal : dueDisplay)}</span>
@@ -286,7 +287,7 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
 
         {/* Notes (only when present) */}
         {String(inv.notes ?? "").trim().length > 0 && (
-          <div className="mt-3 py-2 px-3 border border-gray-400 bg-white">
+          <div className="mt-3 py-2 px-3 border border-slate-300 bg-white rounded-[5px]">
             <p className="text-xs font-semibold mb-1">Notes</p>
             <p className="text-xs text-muted-foreground whitespace-pre-wrap">
               {String(inv.notes).trim()}
@@ -294,7 +295,7 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
           </div>
         )}
 
-        {/* Footer - Signatures (underline style) + Thank You */}
+        {/* Footer - Signatures and print notice */}
         <div className="mt-12">
           <div className="grid grid-cols-2 gap-4 items-end">
             {/* Customer Signature - underline only */}
@@ -309,11 +310,7 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
             </div>
           </div>
 
-          {/* Thank You Note */}
           <div className="text-center mt-8 pt-4 border-t border-gray-300">
-            <p className="text-xs font-semibold text-primary">
-              {t("thank_you", settings.language)}
-            </p>
             <p className="text-[10px] text-muted-foreground mt-1">
               {t("computer_generated", settings.language)}
             </p>

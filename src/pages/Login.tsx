@@ -78,7 +78,7 @@ export default function Login() {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-700"></div>
       </div>
 
-      <Card className="w-full max-w-md shadow-2xl border-0 backdrop-blur-sm bg-white/95 dark:bg-slate-950/95 relative z-10 rounded-[20px]">
+      <Card className="w-full max-w-md shadow-2xl border-0 backdrop-blur-sm bg-white/95 dark:bg-slate-950/95 relative z-10 rounded-[5px]">
         <CardHeader className="text-center pb-6 space-y-4">
           {/* Logo Container with enhanced styling */}
           <div className="mx-auto w-24 h-24 rounded-[20px] bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center shadow-lg">
@@ -195,7 +195,7 @@ export default function Login() {
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="w-full rounded-[12px] h-11 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 text-base mt-6"
+              className="w-full rounded-[5px] h-11 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 text-base mt-6"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">

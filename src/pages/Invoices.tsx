@@ -6,9 +6,10 @@ import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MoreVertical, Eye, Pencil, Trash2, Printer } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { PageTitle } from '@/components/shared/PageTitle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,13 +48,14 @@ export default function Invoices() {
   });
 
   const columns = [
+    { key: 'sno', header: 'S.No', render: (_: Invoice, index: number) => index + 1 },
     { key: 'invoiceNumber', header: 'Invoice #' },
     { 
       key: 'created_at', 
       header: t('date', language), 
       render: (i: Invoice) => formatDate(i.created_at || i.date)
     },
-    { key: 'customerName', header: 'Customer' },
+    { key: 'customerName', header: 'Customer', align: 'left' as const },
     { key: 'grandTotal', header: t('total', language), render: (i: Invoice) => `₹${Number(i.totalAmount || i.grandTotal || 0).toLocaleString('en-IN')}` },
     { key: 'balanceDue', header: t('balance', language), render: (i: Invoice) => {
       const total = Number(i.totalAmount || i.grandTotal || 0);
@@ -76,7 +78,7 @@ export default function Invoices() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold">{t('invoices', language)}</h1>
+        <PageTitle>{t('invoices', language)}</PageTitle>
         <Button onClick={() => navigate('/invoices/new')} size="sm" className="rounded-[5px] bg-primary text-primary-foreground shadow-none hover:bg-primary/90">
           {t('new_invoice', language)}
         </Button>
@@ -102,7 +104,10 @@ export default function Invoices() {
               <DropdownMenuItem onClick={() => window.open(`/invoice/print/${inv.id}`, '_blank')}>
                 <Printer className="w-4 h-4 mr-2" /> Print
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => setDeleteId(inv.id)}>
+              <DropdownMenuItem
+                className="text-destructive hover:bg-destructive hover:text-destructive-foreground focus:bg-destructive focus:text-destructive-foreground"
+                onClick={() => setDeleteId(inv.id)}
+              >
                 <Trash2 className="w-4 h-4 mr-2" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>

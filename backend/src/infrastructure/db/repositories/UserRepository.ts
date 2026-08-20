@@ -34,7 +34,7 @@ export class UserRepository implements IUserRepository {
         data.role,
         data.status,
         data.storeName || "FootWear Pro",
-        data.gstPercent || 18,
+        data.gstPercent ?? 18,
         data.theme || "light",
         data.themeColor || "blue",
         data.language || "en",

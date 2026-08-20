@@ -14,11 +14,11 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Libre Franklin', 'sans-serif'],
-        display: ['Space Grotesk', 'sans-serif'],
+        sans: ['Arimo', 'sans-serif'],
+        display: ['Arimo', 'sans-serif'],
         web: ['Arimo', 'sans-serif'],
-        franklin: ['Libre Franklin', 'sans-serif'],
-        mono: ['Geist Mono', 'monospace'],
+        franklin: ['Arimo', 'sans-serif'],
+        mono: ['Arimo', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

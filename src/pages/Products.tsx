@@ -9,12 +9,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Pencil, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { PageTitle } from '@/components/shared/PageTitle';
 
 export default function Products() {
   const { products, addProduct, updateProduct, deleteProduct } = useDataStore();
   const { language } = useSettingsStore();
+  const sortedProducts = [...products].sort((a, b) => {
+    const dateA = new Date(a.created_at || 0).getTime();
+    const dateB = new Date(b.created_at || 0).getTime();
+    return dateB - dateA;
+  });
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -77,16 +83,16 @@ export default function Products() {
   const columns = [
     { key: 'sno', header: 'S.No', align: 'center' as const, width: '100px', render: (_: Product, index: number) => index + 1 },
     { key: 'name', header: t('name', language), align: 'left' as const },
-    { key: 'price', header: t('price', language), render: (p: Product) => `₹${p.price.toLocaleString('en-IN')}` },
+    { key: 'price', header: t('price', language), render: (p: Product) => `₹${Number(p.price || 0).toLocaleString('en-IN')}` },
     { key: 'description', header: t('description', language) },
   ];
 
   return (
     <div className="space-y-6 pb-8">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        <PageTitle>
           {t("products", language)}
-        </h1>
+        </PageTitle>
         <Button
           onClick={openNew}
           size="sm"
@@ -97,7 +103,7 @@ export default function Products() {
       </div>
 
       <DataTable
-        data={products}
+        data={sortedProducts}
         columns={columns}
         searchKeys={["name", "description"]}
         exportFileName="products"

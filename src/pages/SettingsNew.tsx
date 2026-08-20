@@ -6,12 +6,16 @@ import { uploadService } from '@/services/uploadService';
 import { t } from '@/lib/i18n';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
-import { Store, Lock, Upload } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
+import { Eye, EyeOff, Store, Lock, Upload } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ImageCropDialog } from '@/components/shared/ImageCropDialog';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { PageTitle } from '@/components/shared/PageTitle';
 import { validateImageFile } from '@/lib/imageUtils';
 import { getLogoUrl } from '@/lib/utils/logoUtils';
 
@@ -32,6 +36,7 @@ export default function SettingsNew() {
   });
   
   const [logoError, setLogoError] = useState(false);
+  const [removeLogoOpen, setRemoveLogoOpen] = useState(false);
 
   // Password Change Form
   const [passwordForm, setPasswordForm] = useState({
@@ -41,7 +46,11 @@ export default function SettingsNew() {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+  const [storeErrors, setStoreErrors] = useState<Record<string, string>>({});
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+  const [showPasswords, setShowPasswords] = useState({ current: false, next: false, confirm: false });
   
   // Image crop states
   const [showCropDialog, setShowCropDialog] = useState(false);
@@ -63,6 +72,18 @@ export default function SettingsNew() {
   }, [settings]);
 
   const handleSaveStore = async () => {
+    const nextErrors: Record<string, string> = {};
+    if (!storeForm.storeName.trim()) nextErrors.storeName = 'Store name is required';
+    if (!storeForm.ownerName.trim()) nextErrors.ownerName = 'Owner name is required';
+    if (!storeForm.address.trim()) nextErrors.address = 'Address is required';
+    if (!/^\d{10}$/.test(storeForm.mobile)) nextErrors.mobile = 'Enter a valid 10-digit mobile number';
+    if (storeForm.officeMobile && !/^\d{10}$/.test(storeForm.officeMobile)) nextErrors.officeMobile = 'Enter a valid 10-digit mobile number';
+    setStoreErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      toast.error('Please fix the highlighted fields');
+      return;
+    }
+
     setIsSaving(true);
     try {
       await settings.updateSettings({
@@ -90,15 +111,15 @@ export default function SettingsNew() {
   };
 
   const handleChangePassword = async () => {
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('New passwords do not match');
-      return;
-    }
+    const nextErrors: Record<string, string> = {};
+    if (!passwordForm.currentPassword) nextErrors.currentPassword = 'Current password is required';
+    if (!passwordForm.newPassword) nextErrors.newPassword = 'New password is required';
+    else if (passwordForm.newPassword.length < 6) nextErrors.newPassword = 'Password must be at least 6 characters';
+    if (!passwordForm.confirmPassword) nextErrors.confirmPassword = 'Please confirm your new password';
+    else if (passwordForm.newPassword !== passwordForm.confirmPassword) nextErrors.confirmPassword = 'Passwords do not match';
 
-    if (passwordForm.newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
+    setPasswordErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
 
     setIsChangingPassword(true);
     try {
@@ -108,11 +129,14 @@ export default function SettingsNew() {
       });
       
       toast.success('Password changed successfully');
+      setIsPasswordDialogOpen(false);
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
+      setPasswordErrors({});
+      setShowPasswords({ current: false, next: false, confirm: false });
     } catch (error: any) {
       console.error('Failed to change password:', error);
       toast.error(error?.message || 'Failed to change password');
@@ -160,82 +184,122 @@ export default function SettingsNew() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Settings</h1>
+      <PageTitle>Settings</PageTitle>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Store Details - wide */}
-        <div className="lg:col-span-2">
+        <div>
           <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Store className="w-5 h-5" />
-                Update Store Details
-              </CardTitle>
-              <CardDescription>Manage the store information used throughout your billing documents.</CardDescription>
+            <CardHeader className="border-b border-border/70 bg-muted/20">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Store className="w-5 h-5" />
+                    Update Store Details
+                  </CardTitle>
+                  <CardDescription className="mt-1 max-w-2xl">Manage the store information used throughout your billing documents.</CardDescription>
+                </div>
+                <Button type="button" onClick={() => setIsPasswordDialogOpen(true)} className="shrink-0 rounded-[5px] bg-primary text-primary-foreground hover:bg-primary/90">
+                  <Lock className="h-4 w-4" />
+                  Change Password
+                </Button>
+              </div>
             </CardHeader>
-            <form onSubmit={(event) => { event.preventDefault(); void handleSaveStore(); }}>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form id="store-details-form" onSubmit={(event) => { event.preventDefault(); void handleSaveStore(); }}>
+            <CardContent className="space-y-7 p-6">
+              <section className="space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Account access</p>
+                  <p className="text-xs text-muted-foreground">These details are linked to the signed-in account.</p>
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="space-y-2 rounded-[5px] border border-border bg-muted/25 p-3">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Email</Label>
+                    <p className="truncate text-sm font-medium text-foreground">{user?.email || 'Not available'}</p>
+                    <p className="text-xs text-muted-foreground">Login email cannot be changed here.</p>
+                  </div>
+                  <div className="space-y-2 rounded-[5px] border border-border bg-muted/25 p-3">
+                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Role</Label>
+                    <p className="text-sm font-medium capitalize text-foreground">{user?.role || 'Not available'}</p>
+                    <p className="text-xs text-muted-foreground">Permissions are managed by your account.</p>
+                  </div>
+                </div>
+              </section>
+
+              <section className="space-y-4 border-t border-border/70 pt-6">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Store identity</p>
+                  <p className="text-xs text-muted-foreground">Shown on invoices, receipts, and customer documents.</p>
+                </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Store Name</Label>
+                  <Label>Store Name <span className="text-destructive">*</span></Label>
                   <Input 
                     value={storeForm.storeName} 
-                    onChange={e => setStoreForm({ ...storeForm, storeName: e.target.value })} 
+                    onChange={e => { setStoreForm({ ...storeForm, storeName: e.target.value }); setStoreErrors(errors => ({ ...errors, storeName: '' })); }}
+                    placeholder="Enter store name"
+                    className="bg-transparent"
+                    aria-invalid={!!storeErrors.storeName}
                   />
+                  {storeErrors.storeName && <p className="text-xs text-destructive">{storeErrors.storeName}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label>Owner Name / Full Name</Label>
+                  <Label>Owner Name / Full Name <span className="text-destructive">*</span></Label>
                   <Input 
                     value={storeForm.ownerName} 
-                    onChange={e => setStoreForm({ ...storeForm, ownerName: e.target.value })} 
+                    onChange={e => { setStoreForm({ ...storeForm, ownerName: e.target.value }); setStoreErrors(errors => ({ ...errors, ownerName: '' })); }}
+                    placeholder="Enter owner name"
+                    className="bg-transparent"
+                    aria-invalid={!!storeErrors.ownerName}
                   />
+                  {storeErrors.ownerName && <p className="text-xs text-destructive">{storeErrors.ownerName}</p>}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label>Address</Label>
-                <Input 
+                <Label>Address <span className="text-destructive">*</span></Label>
+                <Textarea
                   value={storeForm.address} 
-                  onChange={e => setStoreForm({ ...storeForm, address: e.target.value })} 
+                  onChange={e => { setStoreForm({ ...storeForm, address: e.target.value }); setStoreErrors(errors => ({ ...errors, address: '' })); }}
+                  placeholder="Enter store address"
+                  className="min-h-20 resize-y bg-transparent"
+                  aria-invalid={!!storeErrors.address}
                 />
+                {storeErrors.address && <p className="text-xs text-destructive">{storeErrors.address}</p>}
               </div>
+              </section>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <section className="space-y-4 border-t border-border/70 pt-6">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Contact and tax details</p>
+                  <p className="text-xs text-muted-foreground">Keep customer contact and tax information current.</p>
+                </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Mobile</Label>
+                  <Label>Mobile <span className="text-destructive">*</span></Label>
                   <Input 
-                    value={storeForm.mobile} 
-                    onChange={e => setStoreForm({ ...storeForm, mobile: e.target.value })} 
+                    value={storeForm.mobile}
+                    maxLength={10}
+                    inputMode="numeric"
+                    onChange={e => { const mobile = e.target.value.replace(/\D/g, '').slice(0, 10); setStoreForm({ ...storeForm, mobile }); setStoreErrors(errors => ({ ...errors, mobile: '' })); }}
+                    placeholder="10-digit mobile number"
+                    className="bg-transparent"
+                    aria-invalid={!!storeErrors.mobile}
                   />
+                  {storeErrors.mobile && <p className="text-xs text-destructive">{storeErrors.mobile}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>Office Mobile Number</Label>
                   <Input 
-                    value={storeForm.officeMobile} 
-                    onChange={e => setStoreForm({ ...storeForm, officeMobile: e.target.value })} 
+                    value={storeForm.officeMobile}
+                    maxLength={10}
+                    inputMode="numeric"
+                    onChange={e => { const officeMobile = e.target.value.replace(/\D/g, '').slice(0, 10); setStoreForm({ ...storeForm, officeMobile }); setStoreErrors(errors => ({ ...errors, officeMobile: '' })); }}
+                    placeholder="Optional 10-digit number"
+                    className="bg-transparent"
+                    aria-invalid={!!storeErrors.officeMobile}
                   />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input 
-                    type="email"
-                    value={user?.email || ''} 
-                    disabled
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">Email is your login email</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Role</Label>
-                  <Input 
-                    value={user?.role || ''} 
-                    disabled 
-                    className="bg-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">Role cannot be changed</p>
+                  {storeErrors.officeMobile && <p className="text-xs text-destructive">{storeErrors.officeMobile}</p>}
                 </div>
               </div>
 
@@ -260,12 +324,20 @@ export default function SettingsNew() {
                 <div className="space-y-2">
                   <Label>GST Number</Label>
                   <Input 
-                    value={storeForm.gstNumber} 
-                    onChange={e => setStoreForm({ ...storeForm, gstNumber: e.target.value })} 
+                    value={storeForm.gstNumber}
+                    placeholder="Enter GST number"
+                    onChange={e => setStoreForm({ ...storeForm, gstNumber: e.target.value })}
+                    className="bg-transparent"
                   />
                 </div>
               </div>
+              </section>
 
+              <section className="space-y-4 border-t border-border/70 pt-6">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Store branding</p>
+                  <p className="text-xs text-muted-foreground">Upload the logo used on printed invoices.</p>
+                </div>
               <div className="space-y-2">
                 <Label>Store Logo</Label>
                 <div className="flex items-center gap-4">
@@ -294,70 +366,95 @@ export default function SettingsNew() {
                       type="file" 
                       accept="image/jpeg,image/jpg,image/png,image/webp" 
                       onChange={handleFileSelect}
-                      className="cursor-pointer"
+                      className="cursor-pointer bg-transparent"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Upload JPG, PNG or WEBP (max 5MB). Image will be cropped & compressed to ~300KB automatically.
-                    </p>
                   </div>
                   {storeForm.logoUrl && (
                     <Button 
-                      variant="ghost" 
+                      type="button"
+                      variant="outline" 
                       size="sm" 
-                      onClick={() => setStoreForm({ ...storeForm, logoUrl: '' })} 
-                      className="text-destructive"
+                      onClick={() => setRemoveLogoOpen(true)}
+                      className="rounded-[5px] border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
                     >
                       Remove
                     </Button>
                   )}
                 </div>
               </div>
+              </section>
 
             </CardContent>
-            <CardFooter className="justify-end">
-              <Button type="submit" disabled={isSaving} size="lg">{isSaving ? 'Saving...' : 'Save Store Details'}</Button>
+            <CardFooter className="justify-end border-t border-border/70 pt-4">
+              <Button type="submit" form="store-details-form" disabled={isSaving} size="lg" className="rounded-[5px]">{isSaving ? 'Updating...' : 'Update Store Details'}</Button>
             </CardFooter>
             </form>
           </Card>
         </div>
 
-        {/* Change Password - own column */}
-        <div>
-          <Card className="shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="w-5 h-5" />
-                Change Password
-              </CardTitle>
-              <CardDescription>Update the password used to access the admin billing system.</CardDescription>
-            </CardHeader>
-            <form onSubmit={(event) => { event.preventDefault(); void handleChangePassword(); }}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Current Password</Label>
-                <Input type="password" value={passwordForm.currentPassword} onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} placeholder="Enter current password" />
-              </div>
-
-              <div className="space-y-2">
-                <Label>New Password</Label>
-                <Input type="password" value={passwordForm.newPassword} onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} placeholder="Enter new password (min 6 characters)" />
-                <p className="text-xs text-muted-foreground">Use a strong password: mix uppercase, lowercase, numbers and symbols.</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Confirm New Password</Label>
-                <Input type="password" value={passwordForm.confirmPassword} onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} placeholder="Confirm new password" />
-              </div>
-
-            </CardContent>
-            <CardFooter className="justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })} disabled={isChangingPassword}>Reset</Button>
-              <Button type="submit" disabled={isChangingPassword}>{isChangingPassword ? 'Changing...' : 'Change Password'}</Button>
-            </CardFooter>
-            </form>
-          </Card>
-        </div>
       </div>
+
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent className="rounded-[5px] sm:max-w-md" onInteractOutside={(event) => event.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-primary" />
+              Change Password
+            </DialogTitle>
+            <DialogDescription>Update the password used to access the billing system.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(event) => { event.preventDefault(); void handleChangePassword(); }} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Current Password <span className="text-destructive">*</span></Label>
+              <div className="relative">
+                <Input type={showPasswords.current ? 'text' : 'password'} value={passwordForm.currentPassword} onChange={e => { setPasswordForm({ ...passwordForm, currentPassword: e.target.value }); setPasswordErrors(errors => ({ ...errors, currentPassword: '' })); }} placeholder="Enter current password" className="pr-10" aria-invalid={!!passwordErrors.currentPassword} />
+                <button type="button" aria-label={showPasswords.current ? 'Hide current password' : 'Show current password'} onClick={() => setShowPasswords(value => ({ ...value, current: !value.current }))} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground">
+                  {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {passwordErrors.currentPassword && <p className="text-xs text-destructive">{passwordErrors.currentPassword}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>New Password <span className="text-destructive">*</span></Label>
+              <div className="relative">
+                <Input type={showPasswords.next ? 'text' : 'password'} value={passwordForm.newPassword} onChange={e => { setPasswordForm({ ...passwordForm, newPassword: e.target.value }); setPasswordErrors(errors => ({ ...errors, newPassword: '' })); }} placeholder="Minimum 6 characters" className="pr-10" aria-invalid={!!passwordErrors.newPassword} />
+                <button type="button" aria-label={showPasswords.next ? 'Hide new password' : 'Show new password'} onClick={() => setShowPasswords(value => ({ ...value, next: !value.next }))} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground">
+                  {showPasswords.next ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {passwordErrors.newPassword && <p className="text-xs text-destructive">{passwordErrors.newPassword}</p>}
+              <p className="text-xs text-muted-foreground">Use uppercase, lowercase, numbers, and symbols.</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Confirm New Password <span className="text-destructive">*</span></Label>
+              <div className="relative">
+                <Input type={showPasswords.confirm ? 'text' : 'password'} value={passwordForm.confirmPassword} onChange={e => { setPasswordForm({ ...passwordForm, confirmPassword: e.target.value }); setPasswordErrors(errors => ({ ...errors, confirmPassword: '' })); }} placeholder="Confirm new password" className="pr-10" aria-invalid={!!passwordErrors.confirmPassword} />
+                <button type="button" aria-label={showPasswords.confirm ? 'Hide confirmed password' : 'Show confirmed password'} onClick={() => setShowPasswords(value => ({ ...value, confirm: !value.confirm }))} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground">
+                  {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {passwordErrors.confirmPassword && <p className="text-xs text-destructive">{passwordErrors.confirmPassword}</p>}
+            </div>
+            <DialogFooter className="flex-row justify-end gap-2 space-x-0">
+              <Button type="button" variant="outline" onClick={() => setIsPasswordDialogOpen(false)} disabled={isChangingPassword} className="rounded-[5px] border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30">Close</Button>
+              <Button type="button" onClick={() => { setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); setPasswordErrors({}); }} disabled={isChangingPassword} className="rounded-[5px] bg-red-600 text-white hover:bg-red-700">Reset</Button>
+              <Button type="submit" disabled={isChangingPassword} className="rounded-[5px]">{isChangingPassword ? 'Changing...' : 'Change Password'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={removeLogoOpen}
+        onOpenChange={setRemoveLogoOpen}
+        onConfirm={() => {
+          setStoreForm({ ...storeForm, logoUrl: '' });
+          setRemoveLogoOpen(false);
+        }}
+        title="Remove Store Logo"
+        description="Are you sure you want to remove the store logo?"
+        confirmLabel="Remove Logo"
+      />
 
       {/* Image Crop Dialog */}
       <ImageCropDialog

@@ -9,7 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
+import { PageTitle } from '@/components/shared/PageTitle';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export default function CustomerForm() {
@@ -90,9 +91,9 @@ export default function CustomerForm() {
         <Button variant="ghost" size="icon" onClick={() => navigate('/customers')}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="font-display text-2xl font-bold">
+        <PageTitle>
           {isEditMode ? t('edit', language) : t('add', language)} {t('customers', language)}
-        </h1>
+        </PageTitle>
       </div>
 
       <Card>

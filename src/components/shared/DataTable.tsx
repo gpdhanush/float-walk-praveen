@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import { flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type PaginationState, type SortingState } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, Download, Search, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowDown, ArrowUp, Download, Search, X, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { t } from '@/lib/i18n';
@@ -90,7 +90,7 @@ export function DataTable<T extends Record<string, any>>({ data, columns, search
 
   return <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="relative min-w-[220px] max-w-sm flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder={t('search', language)} value={search} onChange={(event) => setSearch(event.target.value)} className="rounded-[5px] pl-10" /></div>
+      <div className="relative min-w-[220px] max-w-sm flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input placeholder={t('search', language)} value={search} onChange={(event) => setSearch(event.target.value)} className="rounded-[5px] pl-10 pr-10" />{search && <Button type="button" variant="ghost" size="icon" aria-label="Clear search" onClick={() => setSearch('')} className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 rounded-[5px] bg-transparent text-muted-foreground hover:bg-transparent hover:text-foreground focus:bg-transparent"><X className="h-4 w-4" /></Button>}</div>
       {filterKey && filterOptions.length > 0 && <select value={filter} onChange={(event) => setFilter(event.target.value)} className="h-10 rounded-[5px] border border-border bg-field px-3 text-sm"><option value="">All</option>{filterOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>}
       {exportFileName && <Button variant="outline" size="sm" onClick={handleExport} className="gap-2 rounded-[5px] border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary"><Download className="h-4 w-4" />{t('export', language)}</Button>}
     </div>
