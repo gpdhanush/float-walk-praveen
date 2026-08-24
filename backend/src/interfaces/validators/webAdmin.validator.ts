@@ -3,16 +3,18 @@ import type { Request, Response, NextFunction } from 'express';
 import { AppError, ErrorCodes } from '../../utils/errors.js';
 import { webResourceDefinitions, type WebResource } from '../../infrastructure/db/repositories/WebAdminRepository.js';
 
+const dateOnly = Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/);
+
 const schemas: Record<WebResource, Joi.ObjectSchema> = {
   enquiries: Joi.object({
     name: Joi.string().min(1).max(150).required(), phone: Joi.string().min(1).max(20).required(),
     email: Joi.string().email().max(255).required(), service: Joi.string().min(1).max(150).required(),
-    preferred_date: Joi.date().iso().allow(null, ''), preferred_time: Joi.string().allow(null, ''),
+    preferred_date: dateOnly.allow(null, ''), preferred_time: Joi.string().allow(null, ''),
     message: Joi.string().allow(null, ''), status: Joi.string().valid('new', 'contacted', 'completed', 'cancelled'),
   }),
   appointments: Joi.object({
     customer_name: Joi.string().min(1).max(150).required(), phone: Joi.string().min(1).max(20).required(),
-    service: Joi.string().min(1).max(150).required(), preferred_date: Joi.date().iso().required(),
+    service: Joi.string().min(1).max(150).required(), preferred_date: dateOnly.required(),
     preferred_time: Joi.string().required(), message: Joi.string().allow(null, ''),
     status: Joi.string().valid('pending', 'confirmed', 'completed', 'cancelled', 'no_show'),
     confirmation_method: Joi.string().valid('phone', 'whatsapp', 'both').allow(null, ''),
@@ -20,12 +22,13 @@ const schemas: Record<WebResource, Joi.ObjectSchema> = {
   testimonials: Joi.object({
     customer_name: Joi.string().min(1).max(150).required(), rating: Joi.number().integer().min(1).max(5).required(),
     testimonial: Joi.string().min(1).required(), service: Joi.string().max(150).allow(null, ''),
-    review_date: Joi.date().iso().allow(null, ''), is_published: Joi.boolean(),
+    review_date: dateOnly.allow(null, ''), is_published: Joi.boolean(),
   }),
   gallery: Joi.object({
     media_id: Joi.string().min(1).max(150).required(), type: Joi.string().valid('image', 'instagram', 'youtube').required(),
     title: Joi.string().min(1).max(255).required(), caption: Joi.string().allow(null, ''),
-    src: Joi.string().max(500).allow(null, ''), url: Joi.string().max(500).allow(null, ''),
+    src: Joi.when('type', { is: 'image', then: Joi.string().max(500).required(), otherwise: Joi.string().max(500).allow(null, '') }),
+    url: Joi.when('type', { is: Joi.valid('instagram', 'youtube'), then: Joi.string().max(500).required(), otherwise: Joi.string().max(500).allow(null, '') }),
     poster: Joi.string().max(500).allow(null, ''), is_active: Joi.boolean(), sort_order: Joi.number().integer().min(0),
   }),
   services: Joi.object({

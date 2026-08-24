@@ -1,65 +1,21 @@
-// Theme color system - applies CSS variables based on selected color
+const materialColor = (light: string, dark: string) => ({
+  light: { primary: light, primaryForeground: '0 0% 100%' },
+  dark: { primary: dark, primaryForeground: '0 0% 100%' },
+});
+
 export const themeColors = {
-  blue: {
-    light: {
-      primary: '221.2 83.2% 53.3%',
-      primaryForeground: '210 40% 98%',
-    },
-    dark: {
-      primary: '217.2 91.2% 59.8%',
-      primaryForeground: '222.2 47.4% 11.2%',
-    }
-  },
-  purple: {
-    light: {
-      primary: '262.1 83.3% 57.8%',
-      primaryForeground: '210 40% 98%',
-    },
-    dark: {
-      primary: '263.4 70% 50.4%',
-      primaryForeground: '210 40% 98%',
-    }
-  },
-  green: {
-    light: {
-      primary: '142.1 76.2% 36.3%',
-      primaryForeground: '355.7 100% 97.3%',
-    },
-    dark: {
-      primary: '142.1 70.6% 45.3%',
-      primaryForeground: '144.9 80.4% 10%',
-    }
-  },
-  orange: {
-    light: {
-      primary: '24.6 95% 53.1%',
-      primaryForeground: '60 9.1% 97.8%',
-    },
-    dark: {
-      primary: '20.5 90.2% 48.2%',
-      primaryForeground: '60 9.1% 97.8%',
-    }
-  },
-  red: {
-    light: {
-      primary: '0 72.2% 50.6%',
-      primaryForeground: '0 85.7% 97.3%',
-    },
-    dark: {
-      primary: '0 62.8% 30.6%',
-      primaryForeground: '0 85.7% 97.3%',
-    }
-  },
-  pink: {
-    light: {
-      primary: '330.4 81.2% 60.4%',
-      primaryForeground: '210 40% 98%',
-    },
-    dark: {
-      primary: '330.4 81.2% 60.4%',
-      primaryForeground: '346.8 77.2% 12.2%',
-    }
-  }
+  blue500: materialColor('217 91% 45%', '217 91% 60%'),
+  red500: materialColor('0 74% 50%', '0 84% 62%'),
+  pink500: materialColor('340 82% 52%', '340 82% 65%'),
+  purple500: materialColor('270 70% 50%', '270 80% 65%'),
+  deepPurple500: materialColor('255 65% 50%', '255 80% 66%'),
+  indigo500: materialColor('231 65% 55%', '231 85% 68%'),
+  cyan500: materialColor('192 75% 42%', '192 85% 58%'),
+  teal500: materialColor('174 80% 36%', '174 75% 55%'),
+  green500: materialColor('145 63% 42%', '145 70% 58%'),
+  amber500: materialColor('38 92% 50%', '38 100% 62%'),
+  orange500: materialColor('24 90% 50%', '24 95% 62%'),
+  deepOrange500: materialColor('14 85% 50%', '14 95% 64%'),
 };
 
 export function applyThemeColor(color: string, theme: 'light' | 'dark') {
@@ -85,9 +41,16 @@ export function applyThemeColor(color: string, theme: 'light' | 'dark') {
 }
 
 export const themeColorOptions = [
-  { name: 'Blue', value: 'blue', color: 'bg-blue-500' },
-  { name: 'Purple', value: 'purple', color: 'bg-purple-500' },
-  { name: 'Green', value: 'green', color: 'bg-green-500' },
-  { name: 'Red', value: 'red', color: 'bg-red-500' },
-  { name: 'Pink', value: 'pink', color: 'bg-pink-500' },
+  { name: 'Blue 500', value: 'blue500', color: 'bg-blue-500' },
+  { name: 'Red 500', value: 'red500', color: 'bg-red-500' },
+  { name: 'Pink 500', value: 'pink500', color: 'bg-pink-500' },
+  { name: 'Purple 500', value: 'purple500', color: 'bg-purple-500' },
+  { name: 'Deep Purple 500', value: 'deepPurple500', color: 'bg-violet-500' },
+  { name: 'Indigo 500', value: 'indigo500', color: 'bg-indigo-500' },
+  { name: 'Cyan 500', value: 'cyan500', color: 'bg-cyan-500' },
+  { name: 'Teal 500', value: 'teal500', color: 'bg-teal-500' },
+  { name: 'Green 500', value: 'green500', color: 'bg-green-500' },
+  { name: 'Amber 500', value: 'amber500', color: 'bg-amber-500' },
+  { name: 'Orange 500', value: 'orange500', color: 'bg-orange-500' },
+  { name: 'Deep Orange 500', value: 'deepOrange500', color: 'bg-orange-600' },
 ];

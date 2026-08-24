@@ -23,6 +23,17 @@ export interface AddPaymentInput {
   reference?: string;
 }
 
+function resolveInvoiceStatus(
+  requestedStatus: InvoiceStatus | undefined,
+  totalAmount: number,
+  paidAmount: number,
+): InvoiceStatus {
+  if (requestedStatus) return requestedStatus;
+  if (totalAmount > 0 && paidAmount >= totalAmount) return "paid";
+  if (paidAmount > 0) return "partial";
+  return "pending";
+}
+
 export class InvoiceUseCases {
   constructor(
     private readonly invoiceRepo: IInvoiceRepository,
@@ -39,7 +50,7 @@ export class InvoiceUseCases {
     paidAmount?: number;
     invoiceNumber?: string;
     status?: InvoiceStatus;
-    type?: string;
+    type?: "Invoice" | "Advance Payment";
     subtotal?: number;
     gstPercent?: number;
     gstAmount?: number;
@@ -58,26 +69,25 @@ export class InvoiceUseCases {
 
     let code = data.invoiceNumber;
     if (!code) {
-      const prefix =
-        data.type === "Quotation"
-          ? "QUO"
-          : data.type === "Advance Payment"
-            ? "ADV"
-            : "INV";
+      const prefix = data.type === "Advance Payment" ? "ADV" : "INV";
       code = await this.codeGenerator.generate(prefix as any);
     }
+
+    const totalAmount = Number(data.grandTotal ?? data.totalAmount ?? 0);
+    const paidAmount = Number(data.advancePaid ?? data.paidAmount ?? 0);
+    const status = resolveInvoiceStatus(data.status, totalAmount, paidAmount);
 
     const invoice = await this.invoiceRepo.create({
       id: randomUUID(),
       code,
       customerId: data.customerId,
-      status: data.status ?? "pending",
+      status,
       type: data.type ?? "Invoice",
-      totalAmount: data.grandTotal ?? data.totalAmount ?? 0,
+      totalAmount,
       subtotal: data.subtotal,
       gstPercent: data.gstPercent,
       gstAmount: data.gstAmount,
-      paidAmount: data.advancePaid ?? data.paidAmount ?? 0,
+      paidAmount,
       notes: data.notes ?? null,
       createdBy: data.createdBy,
     });
@@ -219,12 +229,13 @@ export class InvoiceUseCases {
   async update(
     id: string,
     data: {
+      customerId?: string;
       notes?: string;
       items?: AddItemInput[];
       totalAmount?: number;
       paidAmount?: number;
       status?: InvoiceStatus;
-      type?: string;
+      type?: "Invoice" | "Advance Payment";
       subtotal?: number;
       gstPercent?: number;
       gstAmount?: number;
@@ -248,11 +259,28 @@ export class InvoiceUseCases {
     if (!invoice)
       throw new AppError(ErrorCodes.NOT_FOUND, "Invoice not found", 404);
 
+    if (data.customerId && data.customerId !== invoice.customerId) {
+      const customer = await this.customerRepo.findById(data.customerId);
+      if (!customer) {
+        throw new AppError(ErrorCodes.NOT_FOUND, "Customer not found", 404);
+      }
+    }
+
+    const totalAmount = Number(data.grandTotal ?? data.totalAmount ?? invoice.totalAmount ?? 0);
+    const paidAmount = Number(data.advancePaid ?? data.paidAmount ?? invoice.paidAmount ?? 0);
+    const status = resolveInvoiceStatus(data.status, totalAmount, paidAmount);
+    const isAdvanceConversion = invoice.type === "Advance Payment" && data.type === "Invoice";
+    const code = isAdvanceConversion
+      ? await this.codeGenerator.generate("INV")
+      : undefined;
+
     const updated = await this.invoiceRepo.update(id, {
-      status: data.status,
+      ...(data.customerId ? { customerId: data.customerId } : {}),
+      status,
       type: data.type,
-      totalAmount: data.grandTotal ?? data.totalAmount,
-      paidAmount: data.advancePaid ?? data.paidAmount,
+      ...(code ? { code } : {}),
+      totalAmount,
+      paidAmount,
       notes: data.notes,
       subtotal: data.subtotal,
       gstPercent: data.gstPercent,

@@ -1,4 +1,5 @@
 import { useAuthStore } from '@/stores/authStore';
+import { useLoadingStore } from '@/stores/loadingStore';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -29,12 +30,18 @@ const getAuthData = () => {
   return null;
 };
 
-const updateAuthToken = (newToken: string) => {
+const updateAuthTokens = (newToken: string, newRefreshToken?: string) => {
+  useAuthStore.setState((state) => ({
+    ...state,
+    token: newToken,
+    ...(newRefreshToken ? { refreshToken: newRefreshToken } : {}),
+  }));
   const authStore = localStorage.getItem('auth-store');
   if (authStore) {
     try {
       const parsed = JSON.parse(authStore);
       parsed.state.token = newToken;
+      if (newRefreshToken) parsed.state.refreshToken = newRefreshToken;
       localStorage.setItem('auth-store', JSON.stringify(parsed));
     } catch (e) {
       console.error('Error updating auth token', e);
@@ -77,9 +84,10 @@ async function refreshAccessToken(): Promise<string | null> {
 
     const data = await response.json();
     const newAccessToken = data.data?.accessToken || data.accessToken;
+    const newRefreshToken = data.data?.refreshToken || data.refreshToken;
     
     if (newAccessToken) {
-      updateAuthToken(newAccessToken);
+      updateAuthTokens(newAccessToken, newRefreshToken);
       return newAccessToken;
     }
     return null;
@@ -145,14 +153,22 @@ async function handleResponse(response: Response, retryFn?: () => Promise<Respon
   return response.json();
 }
 
+async function request(makeRequest: () => Promise<Response>): Promise<any> {
+  const { startRequest, finishRequest } = useLoadingStore.getState();
+  startRequest();
+  try {
+    const response = await makeRequest();
+    return await handleResponse(response, makeRequest);
+  } finally {
+    finishRequest();
+  }
+}
+
 export const api = {
   get: async (endpoint: string) => {
     console.log(`[API] GET ${endpoint}`);
-    const headers = getHeaders();
-    console.log('[API] Request headers:', Object.keys(headers));
-    const makeRequest = () => fetch(`${API_URL}${endpoint}`, { headers });
-    const response = await makeRequest();
-    return handleResponse(response, makeRequest);
+      const makeRequest = () => fetch(`${API_URL}${endpoint}`, { headers: getHeaders() });
+      return request(makeRequest);
   },
   post: async (endpoint: string, data: any) => {
     const makeRequest = () => fetch(`${API_URL}${endpoint}`, {
@@ -160,8 +176,7 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    const response = await makeRequest();
-    return handleResponse(response, makeRequest);
+      return request(makeRequest);
   },
   put: async (endpoint: string, data: any) => {
     const makeRequest = () => fetch(`${API_URL}${endpoint}`, {
@@ -169,27 +184,22 @@ export const api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    const response = await makeRequest();
-    return handleResponse(response, makeRequest);
+      return request(makeRequest);
   },
   patch: async (endpoint: string, data: any) => {
     console.log(`[API] PATCH ${endpoint}`, data);
-    const headers = getHeaders();
-    console.log('[API] Request headers:', Object.keys(headers));
     const makeRequest = () => fetch(`${API_URL}${endpoint}`, {
       method: 'PATCH',
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    const response = await makeRequest();
-    return handleResponse(response, makeRequest);
+      return request(makeRequest);
   },
   delete: async (endpoint: string) => {
     const makeRequest = () => fetch(`${API_URL}${endpoint}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    const response = await makeRequest();
-    return handleResponse(response, makeRequest);
+      return request(makeRequest);
   },
 };

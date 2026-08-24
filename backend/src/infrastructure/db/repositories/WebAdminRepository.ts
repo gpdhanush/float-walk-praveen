@@ -49,6 +49,11 @@ export const webResourceDefinitions: Record<WebResource, ResourceDefinition> = {
 
 export type WebAdminRecord = Record<string, unknown>;
 
+function normalizeDateOnly(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  return /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : value;
+}
+
 export class WebAdminRepository {
   private definition(resource: WebResource): ResourceDefinition {
     return webResourceDefinitions[resource];
@@ -56,7 +61,9 @@ export class WebAdminRepository {
 
   async list(resource: WebResource, limit: number, offset: number): Promise<{ rows: WebAdminRecord[]; total: number }> {
     const definition = this.definition(resource);
-    const columns = ['id', ...definition.columns, 'created_at', 'updated_at'].join(', ');
+    const columns = ['id', ...definition.columns, 'created_at', 'updated_at']
+      .map((column) => ['preferred_date', 'review_date'].includes(column) ? `DATE_FORMAT(${column}, '%Y-%m-%d') AS ${column}` : column)
+      .join(', ');
     const countRows = await selectRows<{ total: number }>(
       `SELECT COUNT(*) AS total FROM ${definition.table}`,
     );
@@ -69,7 +76,9 @@ export class WebAdminRepository {
 
   async getById(resource: WebResource, id: number): Promise<WebAdminRecord | null> {
     const definition = this.definition(resource);
-    const columns = ['id', ...definition.columns, 'created_at', 'updated_at'].join(', ');
+    const columns = ['id', ...definition.columns, 'created_at', 'updated_at']
+      .map((column) => ['preferred_date', 'review_date'].includes(column) ? `DATE_FORMAT(${column}, '%Y-%m-%d') AS ${column}` : column)
+      .join(', ');
     const rows = await selectRows<WebAdminRecord>(
       `SELECT ${columns} FROM ${definition.table} WHERE ${definition.primaryKey} = ?`,
       [id],
@@ -83,7 +92,7 @@ export class WebAdminRepository {
     const placeholders = fields.map(() => '?').join(', ');
     const [result] = await pool.execute(
       `INSERT INTO ${definition.table} (${fields.join(', ')}) VALUES (${placeholders})`,
-      fields.map((field) => data[field] ?? null),
+      fields.map((field) => normalizeDateOnly(data[field]) ?? null),
     );
     const id = Number((result as { insertId: number }).insertId);
     const record = await this.getById(resource, id);
@@ -97,7 +106,7 @@ export class WebAdminRepository {
     if (fields.length) {
       await pool.execute(
         `UPDATE ${definition.table} SET ${fields.map((field) => `${field} = ?`).join(', ')} WHERE ${definition.primaryKey} = ?`,
-        [...fields.map((field) => data[field] ?? null), id],
+        [...fields.map((field) => normalizeDateOnly(data[field]) ?? null), id],
       );
     }
     return this.getById(resource, id);

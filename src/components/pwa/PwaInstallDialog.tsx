@@ -123,27 +123,30 @@ export function PwaInstallDialog() {
         else setOpen(true);
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Install Float Walk</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="max-w-md overflow-hidden rounded-3xl border border-white/60 bg-white/65 p-6 text-slate-900 shadow-[0_24px_80px_-24px_rgba(15,23,42,0.45)] backdrop-blur-2xl dark:border-white/15 dark:bg-slate-950/60 dark:text-slate-100 dark:shadow-[0_24px_80px_-24px_rgba(0,0,0,0.75)]">
+        <DialogHeader className="relative">
+          <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-2xl border border-sky-200/70 bg-sky-100/70 text-sky-700 shadow-inner dark:border-sky-300/20 dark:bg-sky-400/15 dark:text-sky-200">
+            <Download className="h-5 w-5" />
+          </div>
+          <DialogTitle className="text-xl tracking-tight dark:text-slate-100">Install Float Walk</DialogTitle>
+          <DialogDescription className="max-w-sm text-slate-600 dark:text-slate-300">
             Install this app for faster access and a full-screen experience.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-lg border bg-muted/30 p-4 text-sm space-y-1">
-          <div className="font-medium">What you get</div>
-          <ul className="list-disc pl-5 text-muted-foreground">
+        <div className="space-y-2 rounded-2xl border border-white/70 bg-white/35 p-4 text-sm shadow-inner dark:border-white/10 dark:bg-white/[0.06]">
+          <div className="font-semibold text-slate-800 dark:text-slate-100">What you get</div>
+          <ul className="list-disc space-y-1 pl-5 text-slate-600 dark:text-slate-300">
             <li>Home-screen icon and standalone app</li>
             <li>Faster startup with cached assets</li>
           </ul>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={dismiss}>
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="outline" onClick={dismiss} className="border-white/70 bg-white/45 text-slate-700 hover:bg-white/70 hover:text-slate-900 dark:border-white/15 dark:bg-white/[0.06] dark:text-slate-200 dark:hover:bg-white/10 dark:hover:text-white">
             Not now
           </Button>
-          <Button onClick={handleInstall} className="gap-2">
+          <Button onClick={handleInstall} className="gap-2 border border-sky-300/30 bg-sky-600 text-white shadow-lg shadow-sky-900/15 hover:bg-sky-500 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400">
             <Download className="h-4 w-4" />
             Install
           </Button>

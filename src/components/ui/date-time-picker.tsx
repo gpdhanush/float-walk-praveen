@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarIcon, Check, Clock3 } from 'lucide-react';
 import { format, isValid, parse } from 'date-fns';
 
@@ -8,7 +8,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-const pickerButtonClass = 'h-10 w-full rounded-[5px] border border-input bg-field justify-start px-3 font-normal';
+const pickerButtonClass = 'mt-2 h-10 w-full rounded-[5px] border border-input bg-transparent justify-start px-3 font-normal';
 
 export interface DatePickerProps {
   value: string;
@@ -22,11 +22,16 @@ export function DatePicker({ value, placeholder = 'Pick a date', onChange, class
   const selected = (() => {
     if (!value) return undefined;
     const rawValue = String(value).trim();
-    const parsedDate = /^\d{4}-\d{2}-\d{2}$/.test(rawValue)
-      ? parse(rawValue, 'yyyy-MM-dd', new Date())
+    const parsedDate = /^\d{4}-\d{2}-\d{2}/.test(rawValue)
+      ? parse(rawValue.slice(0, 10), 'yyyy-MM-dd', new Date())
       : new Date(rawValue);
     return isValid(parsedDate) ? parsedDate : undefined;
   })();
+  const [calendarMonth, setCalendarMonth] = useState<Date | undefined>(selected);
+
+  useEffect(() => {
+    setCalendarMonth(selected);
+  }, [value]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -40,6 +45,8 @@ export function DatePicker({ value, placeholder = 'Pick a date', onChange, class
         <Calendar
           mode="single"
           selected={selected}
+          month={calendarMonth}
+          onMonthChange={setCalendarMonth}
           onSelect={(date) => {
             if (date) {
               onChange(format(date, 'yyyy-MM-dd'));

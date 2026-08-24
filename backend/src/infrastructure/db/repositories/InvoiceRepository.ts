@@ -210,9 +210,11 @@ export class InvoiceRepository implements IInvoiceRepository {
     const fields: string[] = [];
     const values: unknown[] = [];
     const map: Record<string, string> = {
+      code: "code",
       status: "status",
       totalAmount: "total_amount",
       paidAmount: "paid_amount",
+      customerId: "customer_id",
       notes: "notes",
       type: "type",
       subtotal: "subtotal",
@@ -232,13 +234,11 @@ export class InvoiceRepository implements IInvoiceRepository {
       "balanceDue",
       "items",
       "payments",
-      "customerId",
       "customerName",
       "customerMobile",
       "customerEmail",
       "customerAddress",
       "invoiceNumber",
-      "code",
       "date",
     ];
 

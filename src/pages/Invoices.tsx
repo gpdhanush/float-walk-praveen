@@ -5,8 +5,8 @@ import { t } from '@/lib/i18n';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Eye, Pencil, Trash2, Printer } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { MoreVertical, Eye, Pencil, Trash2, Printer, ArrowRightLeft } from 'lucide-react';
+import { toast } from '../components/ui/sonner';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { PageTitle } from '@/components/shared/PageTitle';
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export default function Invoices() {
-  const { invoices, deleteInvoice } = useDataStore();
+  const { invoices, deleteInvoice, convertAdvanceToInvoice } = useDataStore();
   const { language } = useSettingsStore();
   const navigate = useNavigate();
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -28,6 +28,15 @@ export default function Invoices() {
       deleteInvoice(deleteId);
       setDeleteId(null);
       toast.success('Invoice deleted');
+    }
+  };
+
+  const handleConvertAdvance = async (invoice: Invoice) => {
+    try {
+      await convertAdvanceToInvoice(invoice.id);
+      toast.success('Advance converted to invoice');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to convert advance');
     }
   };
 
@@ -63,15 +72,19 @@ export default function Invoices() {
       return `₹${(total - paid).toLocaleString('en-IN')}`;
     }},
     {
-      key: 'status', header: t('status', language), render: (i: Invoice) => (
+      key: 'status', header: t('status', language), render: (i: Invoice) => {
+        const displayStatus = i.status || 'pending';
+
+        return (
         <Badge className="rounded-[5px] px-1.5 py-0 text-[10px] leading-4" variant={
-          i.status === 'paid' ? 'default' : 
-          i.status === 'partial' ? 'secondary' : 
-          i.status === 'hold' ? 'outline' : 'destructive'
+          displayStatus === 'paid' ? 'default' : 
+          displayStatus === 'partial' ? 'secondary' : 
+          displayStatus === 'hold' ? 'outline' : 'destructive'
         }>
-          {(i.status || 'pending').toUpperCase()}
+          {displayStatus.toUpperCase()}
         </Badge>
-      )
+        );
+      }
     },
   ];
 
@@ -99,6 +112,11 @@ export default function Invoices() {
               <DropdownMenuItem onClick={() => navigate(`/invoices/edit/${inv.id}`)}>
                 <Pencil className="w-4 h-4 mr-2" /> Edit
               </DropdownMenuItem>
+              {inv.type === 'Advance Payment' && (
+                <DropdownMenuItem onClick={() => void handleConvertAdvance(inv)}>
+                  <ArrowRightLeft className="w-4 h-4 mr-2" /> Close as Invoice
+                </DropdownMenuItem>
+              )}
               {/* Print just navigates to view which has print, or we could open window.print() after nav? 
                   User said "print only invoice content". The View page is best for this. */}
               <DropdownMenuItem onClick={() => window.open(`/invoice/print/${inv.id}`, '_blank')}>

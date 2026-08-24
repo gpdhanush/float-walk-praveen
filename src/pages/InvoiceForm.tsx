@@ -8,21 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Trash2, Check, ChevronsUpDown, ArrowLeft } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { PageTitle } from '@/components/shared/PageTitle';
 import { format } from 'date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { DatePicker } from '@/components/ui/date-time-picker';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import {
   Select,
   SelectContent,
@@ -35,11 +27,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 export default function InvoiceForm() {
   const { id } = useParams();
   const { invoices, customers, products, addInvoice, updateInvoice, addCustomer, fetchInvoice } = useDataStore();
-  const { language, gstPercent } = useSettingsStore();
+  const { language, gstPercent, isLoaded: settingsLoaded } = useSettingsStore();
   const navigate = useNavigate();
   const activeCustomers = customers.filter(c => !c.deleted_at);
   const activeProducts = (products || []).slice().sort((a, b) => a.name.localeCompare(b.name));
   const [productPickerOpen, setProductPickerOpen] = useState<Record<number, boolean>>({});
+  const [productSearch, setProductSearch] = useState<Record<number, string>>({});
   const [customItemMode, setCustomItemMode] = useState<Record<number, boolean>>({});
 
   const [customerId, setCustomerId] = useState('');
@@ -55,12 +48,13 @@ export default function InvoiceForm() {
   const [items, setItems] = useState<InvoiceItem[]>([
     { productName: '', quantity: 1, scan: 0, price: 0, total: 0 },
   ]);
-  const [isGstBill, setIsGstBill] = useState(true);
-  const [gst, setGst] = useState(gstPercent ?? 18);
+  const [isGstBill, setIsGstBill] = useState(false);
+  const [gst, setGst] = useState(0);
   const [advancePaid, setAdvancePaid] = useState(0);
   const [notes, setNotes] = useState('');
-  const [type, setType] = useState<'Invoice' | 'Quotation' | 'Advance Payment'>('Invoice');
-  const [status, setStatus] = useState<'paid' | 'pending' | 'partial' | 'hold'>('paid'); // Default to 'paid'
+  const [type, setType] = useState<'Invoice' | 'Advance Payment'>('Invoice');
+  const [status, setStatus] = useState<'paid' | 'pending' | 'partial' | 'hold'>('pending');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [manualStatusChange, setManualStatusChange] = useState(false); // Track if user manually changed status
   const [invoiceDate, setInvoiceDate] = useState(format(new Date(), 'yyyy-MM-dd')); // Current date
   
@@ -96,8 +90,9 @@ export default function InvoiceForm() {
           return { productName: it.productName ?? '', quantity: q, scan, price: p, total: t };
         }),
       );
-      setGst(Number(existingInvoice.gstPercent ?? 0));
-      setIsGstBill(Number(existingInvoice.gstPercent ?? 0) > 0);
+      const existingGst = Number((existingInvoice as any).gstPercent ?? (existingInvoice as any).gst_percent ?? 0);
+      setGst(existingGst);
+      setIsGstBill(existingGst > 0);
       setAdvancePaid(Number(existingInvoice.paidAmount ?? existingInvoice.advancePaid ?? 0));
       setNotes(existingInvoice.notes || '');
       setType(existingInvoice.type || 'Invoice');
@@ -105,7 +100,7 @@ export default function InvoiceForm() {
       setInvoiceDate(existingInvoice.date ? format(new Date(existingInvoice.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'));
       
       console.log('[InvoiceForm] Loaded values:', {
-        gst: existingInvoice.gstPercent,
+        gst: (existingInvoice as any).gstPercent ?? (existingInvoice as any).gst_percent,
         advancePaid: existingInvoice.paidAmount || existingInvoice.advancePaid,
         status: existingInvoice.status,
         type: existingInvoice.type,
@@ -121,12 +116,12 @@ export default function InvoiceForm() {
     if (!isEditMode) {
       setGst(isGstBill ? (gstPercent ?? 18) : 0); // Default only when no saved value exists
     }
-  }, [isGstBill, gstPercent, isEditMode]);
+  }, [isGstBill, gstPercent, isEditMode, settingsLoaded]);
 
   // When GST Bill is enabled, ensure GST % is set (default 18%)
   useEffect(() => {
     if (isGstBill && gst === 0 && !isEditMode) {
-      setGst(gstPercent ?? 18);
+      setGst(Number(gstPercent) || 18);
     }
   }, [isGstBill, gst, gstPercent, isEditMode]);
 
@@ -195,12 +190,14 @@ export default function InvoiceForm() {
   const enableCustomItemForRow = (idx: number) => {
     setCustomItemMode((s) => ({ ...s, [idx]: true }));
     setProductPickerOpen((s) => ({ ...s, [idx]: false }));
+    setProductSearch((s) => ({ ...s, [idx]: '' }));
     // Clear name so user can type their own
     updateItem(idx, 'productName', '');
   };
 
   const enableProductPickerForRow = (idx: number) => {
     setCustomItemMode((s) => ({ ...s, [idx]: false }));
+    setProductSearch((s) => ({ ...s, [idx]: '' }));
     setProductPickerOpen((s) => ({ ...s, [idx]: true }));
   };
 
@@ -214,9 +211,34 @@ export default function InvoiceForm() {
   const grandTotal = rawGrandTotal + roundOff;
   const balanceDue = Number(grandTotal) - Number(advancePaid);
 
+  const calculatedStatus: 'paid' | 'pending' | 'partial' | 'hold' =
+    status === 'hold' && manualStatusChange
+      ? 'hold'
+      : balanceDue <= 0 && grandTotal > 0
+        ? 'paid'
+        : advancePaid > 0
+          ? 'partial'
+          : 'pending';
+  const effectiveStatus = manualStatusChange ? status : calculatedStatus;
+  const effectiveType = isEditMode && existingInvoice?.type === 'Advance Payment' && effectiveStatus === 'paid' && balanceDue <= 0
+    ? 'Invoice'
+    : type;
+
   const handleSave = async () => {
-    if (!customerName || items.length === 0) {
-      toast.error('Customer name and items are required');
+    const errors: Record<string, string> = {};
+    const normalizedName = customerName.trim();
+    const normalizedMobile = customerMobile.trim();
+    if (!normalizedName) errors.customerName = 'Customer name is required';
+    if (!/^\d{10}$/.test(normalizedMobile)) errors.customerMobile = 'Enter a valid 10-digit mobile number';
+    if (items.length === 0) errors.items = 'Add at least one item';
+    items.forEach((item, index) => {
+      if (!item.productName.trim()) errors[`item-${index}`] = 'Select or enter an item';
+      if (Number(item.quantity) <= 0) errors[`item-${index}`] = 'Quantity must be greater than 0';
+      if (Number(item.price) < 0 || Number(item.scan ?? 0) < 0) errors[`item-${index}`] = 'Amounts cannot be negative';
+    });
+    setValidationErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast.error('Please complete the required customer and item details');
       return;
     }
 
@@ -224,14 +246,22 @@ export default function InvoiceForm() {
 
     // Create new customer if not selected from list
     if (!finalCustomerId) {
+      const existingCustomer = activeCustomers.find((customer) => customer.mobile === normalizedMobile);
+      if (existingCustomer) finalCustomerId = existingCustomer.id;
+    }
+    if (!finalCustomerId) {
       const newId = await addCustomer({
-        name: customerName,
-        mobile: customerMobile,
+        name: normalizedName,
+        mobile: normalizedMobile,
         address: customerAddress,
         email: '',
         notes: ''
       });
       if (newId) finalCustomerId = newId;
+    }
+    if (!finalCustomerId) {
+      toast.error('Could not create or find this customer');
+      return;
     }
 
     console.log('[InvoiceForm] handleSave called');
@@ -254,8 +284,8 @@ export default function InvoiceForm() {
         
         console.log('[InvoiceForm] Updating invoice with', formattedItems.length, 'items');
         console.log('[InvoiceForm] Update data:', {
-          status,
-          type,
+          status: effectiveStatus,
+          type: effectiveType,
           subtotal,
           gst,
           gstAmount,
@@ -264,14 +294,14 @@ export default function InvoiceForm() {
         });
         
         await updateInvoice(id, {
-          customerId: finalCustomerId || '',
-          customerName,
-          customerMobile,
+          customerId: finalCustomerId,
+          customerName: normalizedName,
+          customerMobile: normalizedMobile,
           customerEmail,
           customerAddress,
           paidAmount: advancePaid,
-          status,
-          type,
+          status: effectiveStatus,
+          type: effectiveType,
           notes,
           items: formattedItems,
           subtotal,
@@ -308,9 +338,9 @@ export default function InvoiceForm() {
         });
         
         const resultId = await addInvoice({
-          customerId: finalCustomerId || '',
-          customerName,
-          customerMobile,
+          customerId: finalCustomerId,
+          customerName: normalizedName,
+          customerMobile: normalizedMobile,
           customerEmail,
           customerAddress,
           paidAmount: advancePaid,
@@ -350,14 +380,26 @@ export default function InvoiceForm() {
       </div>
 
       <Card className="w-full [&_input]:bg-transparent [&_textarea]:bg-transparent [&_[role=combobox]]:bg-transparent">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <CardTitle>Invoice Details</CardTitle>
-            <div className="flex gap-4">
+            <div className="flex flex-wrap items-center justify-end gap-3">
+                <div className="flex h-10 items-center gap-2 rounded-[5px] border border-border px-3">
+                  <Label className="text-sm">Bill Type</Label>
+                  <span className="text-xs text-muted-foreground">Non-GST</span>
+                  <Switch
+                    checked={isGstBill}
+                    onCheckedChange={(checked) => {
+                      setIsGstBill(checked);
+                      setGst(checked ? (Number(gstPercent) || 18) : 0);
+                    }}
+                  />
+                  <span className="text-xs font-medium">GST</span>
+                </div>
                 <Select value={status} onValueChange={(v: any) => { 
                   setStatus(v); 
                   setManualStatusChange(true); // Mark that user manually changed it
                 }}>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="w-[130px]">
                         <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -368,12 +410,11 @@ export default function InvoiceForm() {
                     </SelectContent>
                 </Select>
                 <Select value={type} onValueChange={(v: any) => setType(v)}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[150px]">
                         <SelectValue placeholder="Select Type" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="Invoice">Invoice</SelectItem>
-                        <SelectItem value="Quotation">Quotation</SelectItem>
                         <SelectItem value="Advance Payment">Advance Payment</SelectItem>
                     </SelectContent>
                 </Select>
@@ -384,8 +425,9 @@ export default function InvoiceForm() {
             <div className="space-y-4 border-b pb-4">
               <Label>Customer Details</Label>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="relative">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                <div className="relative space-y-2">
+                  <Label>Mobile Number</Label>
                   <Input 
                     placeholder="Mobile Number" 
                     value={customerMobile} 
@@ -496,40 +538,23 @@ export default function InvoiceForm() {
                           )}
                       </div>
                   )}
+                  {validationErrors.customerMobile && <p className="text-xs text-destructive">{validationErrors.customerMobile}</p>}
                 </div>
 
-                <Input 
-                  placeholder="Customer Name" 
-                  value={customerName} 
-                  onChange={e => setCustomerName(e.target.value)} 
-                />
-                <Input 
-                  placeholder="Address" 
-                  className="md:col-span-2" 
-                  value={customerAddress} 
-                  onChange={e => setCustomerAddress(e.target.value)}
-                />
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <Label>Customer Name</Label>
+                  <Input placeholder="Customer Name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+                  {validationErrors.customerName && <p className="text-xs text-destructive">{validationErrors.customerName}</p>}
+                </div>
 
-            {/* Date and GST Toggle Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b pb-4">
-              <div className="space-y-2">
-                <Label>Invoice Date</Label>
-                <DatePicker value={invoiceDate} placeholder="Pick a date" onChange={setInvoiceDate} />
-              </div>
-              <div className="space-y-2">
-                <Label>Bill Type</Label>
-                <div className="flex items-center gap-4 h-10">
-                  <span className="text-sm text-muted-foreground">Non-GST</span>
-                  <Switch 
-                    checked={isGstBill} 
-                    onCheckedChange={(checked) => {
-                      setIsGstBill(checked);
-                      setGst(checked ? gstPercent : 0);
-                    }}
-                  />
-                  <span className="text-sm font-medium">GST Bill</span>
+                <div className="space-y-2">
+                  <Label>Address</Label>
+                  <Input placeholder="Address" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Invoice Date</Label>
+                  <DatePicker value={invoiceDate} placeholder="Pick a date" onChange={setInvoiceDate} />
                 </div>
               </div>
             </div>
@@ -584,37 +609,47 @@ export default function InvoiceForm() {
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[360px] rounded-[5px] bg-white p-0 dark:bg-slate-900" align="start">
-                          <Command>
-                            <CommandInput placeholder="Search products..." />
-                            <CommandList>
-                              <CommandEmpty>No products found.</CommandEmpty>
-                              <CommandGroup>
-                                <CommandItem value="__other__" className="data-[selected=true]:!bg-transparent data-[selected='true']:!bg-transparent data-[selected=true]:!text-foreground dark:data-[selected=true]:!text-foreground" onSelect={() => enableCustomItemForRow(idx)}>
-                                  Other (Custom item)
-                                </CommandItem>
-                              </CommandGroup>
-                              <CommandGroup>
-                                {activeProducts.map((p) => (
-                                  <CommandItem
-                                    key={p.id}
-                                    value={p.name}
-                                    onSelect={(val) => {
-                                      selectProductForItem(idx, val);
-                                      setCustomItemMode((s) => ({ ...s, [idx]: false }));
-                                      setProductPickerOpen((s) => ({ ...s, [idx]: false }));
-                                    }}
-                                    className="group flex items-center justify-between data-[selected=true]:!bg-transparent data-[selected='true']:!bg-transparent data-[selected=true]:!text-foreground dark:data-[selected=true]:!text-foreground"
-                                  >
-                                    <span className="truncate">{p.name}</span>
-                                    <span className="ml-3 whitespace-nowrap text-muted-foreground group-data-[selected=true]:!text-muted-foreground group-data-[selected='true']:!text-muted-foreground">
-                                      ₹{Number(p.price ?? 0).toLocaleString('en-IN')}
-                                    </span>
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
+                        <PopoverContent className="z-[100] w-[360px] rounded-[5px] bg-white p-0 text-black dark:bg-slate-900 dark:text-white" align="start">
+                          <div className="border-b border-gray-200 p-2 dark:border-slate-700">
+                            <Input
+                              autoFocus
+                              placeholder="Search products..."
+                              value={productSearch[idx] || ''}
+                              onChange={(event) => setProductSearch((search) => ({ ...search, [idx]: event.target.value }))}
+                              className="h-9 border-0 bg-transparent text-black shadow-none focus-visible:ring-0 dark:text-white"
+                            />
+                          </div>
+                          <div className="max-h-[260px] overflow-y-auto p-1">
+                            <button
+                              type="button"
+                              onClick={() => enableCustomItemForRow(idx)}
+                              className="flex w-full rounded-[5px] px-3 py-2 text-left text-sm text-black hover:bg-gray-100 hover:text-black dark:text-white dark:hover:bg-slate-800 dark:hover:text-black"
+                            >
+                              Other (Custom item)
+                            </button>
+                            {activeProducts
+                              .filter((product) => product.name.toLowerCase().includes((productSearch[idx] || '').trim().toLowerCase()))
+                              .map((product) => (
+                                <button
+                                  type="button"
+                                  key={product.id}
+                                  onClick={() => {
+                                    selectProductForItem(idx, product.name);
+                                    setProductSearch((search) => ({ ...search, [idx]: '' }));
+                                    setProductPickerOpen((open) => ({ ...open, [idx]: false }));
+                                  }}
+                                  className="flex w-full items-center justify-between rounded-[5px] px-3 py-2 text-left text-sm text-black hover:bg-gray-100 hover:text-black dark:text-white dark:hover:bg-slate-800 dark:hover:text-black"
+                                >
+                                  <span className="truncate">{product.name}</span>
+                                  <span className="ml-3 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                                    ₹{Number(product.price ?? 0).toLocaleString('en-IN')}
+                                  </span>
+                                </button>
+                              ))}
+                            {activeProducts.filter((product) => product.name.toLowerCase().includes((productSearch[idx] || '').trim().toLowerCase())).length === 0 && (
+                              <p className="px-3 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No products found.</p>
+                            )}
+                          </div>
                         </PopoverContent>
                       </Popover>
                     )}
@@ -646,13 +681,17 @@ export default function InvoiceForm() {
                   </div>
                 </div>
               ))}
+              {validationErrors.items && <p className="text-xs text-destructive">{validationErrors.items}</p>}
+              {Object.keys(validationErrors).some((key) => key.startsWith('item-')) && (
+                <p className="text-xs text-destructive">Each item needs a name, a quantity greater than 0, and valid amounts.</p>
+              )}
             </div>
 
             {isGstBill && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center border-t pt-4">
                   <div className="flex items-center space-x-3">
                       <Label htmlFor="gst-select" className="text-sm font-medium">GST %</Label>
-                      <Select value={String(gst)} onValueChange={(v) => {
+                      <Select value={String(Number(gst))} onValueChange={(v) => {
                         const val = Number(v);
                         setGst(val);
                         setIsGstBill(val > 0);
@@ -711,7 +750,7 @@ export default function InvoiceForm() {
               </div>
             </div>
 
-            <div className="space-y-2"><Label>{t('notes', language)}</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} /></div>
+            <div className="space-y-2"><Label>{t('notes', language)}</Label><Textarea placeholder="Add any notes or special instructions..." value={notes} onChange={e => setNotes(e.target.value)} /></div>
         </CardContent>
         <CardFooter className="justify-end gap-2">
             <Button variant="outline" onClick={() => navigate('/invoices')} className="rounded-[5px] border-destructive bg-destructive text-destructive-foreground hover:bg-destructive/90 hover:text-destructive-foreground">{t('cancel', language)}</Button>

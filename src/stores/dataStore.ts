@@ -68,7 +68,7 @@ export interface Invoice {
   payments: PaymentRecord[];
   notes: string;
   date: string;
-  type?: 'Invoice' | 'Quotation' | 'Advance Payment';
+  type?: 'Invoice' | 'Advance Payment';
   created_at: string;
 }
 
@@ -101,6 +101,7 @@ interface DataState {
   // Invoices
   addInvoice: (inv: Partial<Invoice> & Pick<Invoice, 'customerId' | 'items'>) => Promise<string>;
   updateInvoice: (id: string, inv: Partial<Invoice>) => Promise<void>;
+  convertAdvanceToInvoice: (id: string) => Promise<void>;
   deleteInvoice: (id: string) => Promise<void>;
   fetchInvoice: (id: string, options?: { force?: boolean }) => Promise<Invoice | null>;
   addPayment: (invoiceId: string, payment: Omit<PaymentRecord, 'id'>) => Promise<void>;
@@ -299,6 +300,14 @@ export const useDataStore = create<DataState>((set, get) => ({
     
     set(s => ({
       invoices: s.invoices.map(x => x.id === id ? { ...x, ...inv } : x)
+    }));
+  },
+  convertAdvanceToInvoice: async (id) => {
+    const response = await api.put(`/invoices/${id}`, { type: 'Invoice' });
+    const converted = response?.data;
+    if (!converted) throw new Error('Invoice conversion returned no data');
+    set(s => ({
+      invoices: s.invoices.map(invoice => invoice.id === id ? { ...invoice, ...converted, type: 'Invoice' } : invoice),
     }));
   },
   deleteInvoice: async (id) => {

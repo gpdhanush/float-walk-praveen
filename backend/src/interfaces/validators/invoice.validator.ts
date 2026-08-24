@@ -14,24 +14,25 @@ const itemSchema = Joi.object({
 export const createInvoiceSchema = Joi.object({
   customerId: Joi.string().uuid().required(),
   invoiceNumber: Joi.string().allow('', null),
-  items: Joi.array().items(itemSchema).min(1).optional(),
+  items: Joi.array().items(itemSchema).min(1).required(),
   totalAmount: Joi.number().min(0).optional(),
   paidAmount: Joi.number().min(0).optional(),
   status: Joi.string().valid('paid', 'pending', 'partial', 'hold').optional(),
   notes: Joi.string().allow('', null),
-  customerName: Joi.string().allow('', null),
-  customerMobile: Joi.string().allow('', null),
+  customerName: Joi.string().trim().min(1).required(),
+  customerMobile: Joi.string().pattern(/^\d{10}$/).required(),
   customerAddress: Joi.string().allow('', null),
   gstPercent: Joi.number().optional(),
   gstAmount: Joi.number().optional(),
   grandTotal: Joi.number().optional(),
   balanceDue: Joi.number().optional(),
-  type: Joi.string().allow('', null),
+  type: Joi.string().valid('Invoice', 'Advance Payment').default('Invoice'),
+  advancePaid: Joi.number().min(0).optional(),
   date: Joi.string().allow('', null),
 });
 
 export const updateInvoiceSchema = createInvoiceSchema.fork(
-    ['customerId'], 
+  ['customerId', 'customerName', 'customerMobile', 'items'],
     (schema) => schema.optional()
 );
 

@@ -6,12 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { IndianRupee, TrendingUp, FileText, Users, ShoppingCart } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
-import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useState, useMemo, useEffect } from 'react';
 import { api } from '@/services/api';
 import { ExternalLink } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '../components/ui/sonner';
 import { PageTitle } from '@/components/shared/PageTitle';
 
 type StoreStatus = { closed: boolean; reason: string };
@@ -124,41 +124,28 @@ export default function Dashboard() {
     return months.map(month => ({ month, customers: monthData[month] || 0 }));
   }, [customers, selectedYear]);
 
-  // Revenue vs Expense pie chart - use getCreatedDate for year filter
-  const pieData = useMemo(() => {
-    const yearStart = startOfYear(new Date(parseInt(selectedYear), 0, 1));
-    const yearEnd = endOfYear(new Date(parseInt(selectedYear), 11, 31));
-    const yearInvoices = invoices.filter(inv => {
-      const date = getCreatedDate(inv);
-      return !isNaN(date.getTime()) && date >= yearStart && date <= yearEnd;
-    });
-    const yearExpenses = expenses.filter(exp => {
-      const date = getCreatedDate(exp);
-      return !isNaN(date.getTime()) && date >= yearStart && date <= yearEnd;
-    });
-    const invoiceTotal = yearInvoices.reduce((s, i) => s + Number(i.paidAmount || i.advancePaid || (i as any).totalAmount || i.grandTotal || 0), 0);
-    const expenseTotal = yearExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+  // Revenue vs expenses by month for the selected year.
+  const revenueExpenseData = useMemo(() => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyData = months.map((month) => ({ month, revenue: 0, expenses: 0 }));
+    const year = parseInt(selectedYear);
 
-    const data: { name: string; value: number; color: string }[] = [];
-    if (invoiceTotal > 0) data.push({ name: 'Revenue', value: invoiceTotal, color: '#0ea5e9' });
-    if (expenseTotal > 0) data.push({ name: 'Expenses', value: expenseTotal, color: '#f43f5e' });
-    if (data.length === 0) data.push({ name: 'No Data', value: 1, color: '#94a3b8' });
-    return data;
+    invoices.forEach((invoice) => {
+      const date = getCreatedDate(invoice);
+      if (date.getFullYear() === year && !isNaN(date.getTime())) {
+        monthlyData[date.getMonth()].revenue += Number((invoice as any).totalAmount ?? invoice.grandTotal ?? 0);
+      }
+    });
+
+    expenses.forEach((expense) => {
+      const date = getCreatedDate(expense);
+      if (date.getFullYear() === year && !isNaN(date.getTime())) {
+        monthlyData[date.getMonth()].expenses += Number(expense.amount || 0);
+      }
+    });
+
+    return monthlyData;
   }, [invoices, expenses, selectedYear]);
-
-  const PIE_COLORS = ['#0ea5e9', '#f43f5e', '#94a3b8'];
-
-  // Show loading state
-  if (isLoading && invoices.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Loading dashboard data...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 pb-8">
@@ -193,7 +180,7 @@ export default function Dashboard() {
 
       {/* 5 Stats Cards - 5px radius, modern */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="glass-card border-emerald-300/70 bg-emerald-50/50 p-5 transition-shadow hover:shadow-lg dark:border-emerald-800 dark:bg-emerald-950/20">
+        <div className="glass-card border-green-600/70 bg-cyan-50/50 p-5 transition-shadow hover:shadow-lg dark:border-cyan-800 dark:bg-cyan-950/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Revenue</p>
@@ -204,14 +191,14 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="glass-card border-sky-300/70 bg-sky-50/50 p-5 transition-shadow hover:shadow-lg dark:border-sky-800 dark:bg-sky-950/20">
+        <div className="glass-card border-cyan-600/70 bg-emerald-50/50 p-5 transition-shadow hover:shadow-lg dark:border-emerald-800 dark:bg-emerald-950/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Customers</p>
-              <p className="text-xl font-bold mt-1">{stats.totalCustomers}</p>
+              <p className="text-xl font-bold mt-1 text-cyan-600 dark:text-cyan-300">{stats.totalCustomers}</p>
             </div>
-            <div className="w-12 h-12 rounded-[5px] bg-primary/10 flex items-center justify-center">
-              <Users className="w-6 h-6 text-primary" />
+            <div className="w-12 h-12 rounded-[5px] bg-cyan-500/10 dark:bg-cyan-400/10 flex items-center justify-center">
+              <Users className="w-6 h-6 text-cyan-600 dark:text-cyan-300" />
             </div>
           </div>
         </div>
@@ -219,32 +206,32 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Invoices</p>
-              <p className="text-xl font-bold mt-1">{stats.totalInvoices}</p>
+              <p className="text-xl font-bold mt-1 text-violet-600 dark:text-violet-300">{stats.totalInvoices}</p>
             </div>
-            <div className="w-12 h-12 rounded-[5px] bg-primary/10 flex items-center justify-center">
-              <FileText className="w-6 h-6 text-primary" />
+            <div className="w-12 h-12 rounded-[5px] bg-violet-500/10 dark:bg-violet-400/10 flex items-center justify-center">
+              <FileText className="w-6 h-6 text-violet-600 dark:text-violet-300" />
             </div>
           </div>
         </div>
-        <div className="glass-card border-rose-300/70 bg-rose-50/50 p-5 transition-shadow hover:shadow-lg dark:border-rose-800 dark:bg-rose-950/20">
+        <div className="glass-card border-sky-600/70 bg-sky-50/50 p-5 transition-shadow hover:shadow-lg dark:border-sky-300 dark:bg-sky-950/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Total Expenses</p>
-              <p className="text-xl font-bold mt-1 text-red-600">₹{(Number(stats.totalExpenses) || 0).toLocaleString('en-IN')}</p>
+              <p className="text-xl font-bold mt-1 text-sky-600 dark:text-sky-300">₹{(Number(stats.totalExpenses) || 0).toLocaleString('en-IN')}</p>
             </div>
-            <div className="w-12 h-12 rounded-[5px] bg-red-500/10 flex items-center justify-center">
-              <ShoppingCart className="w-6 h-6 text-red-600" />
+            <div className="w-12 h-12 rounded-[5px] bg-sky-500/10 dark:bg-sky-400/10 flex items-center justify-center">
+              <ShoppingCart className="w-6 h-6 text-sky-600 dark:text-sky-300" />
             </div>
           </div>
         </div>
-        <div className="glass-card border-amber-300/70 bg-amber-50/50 p-5 transition-shadow hover:shadow-lg dark:border-amber-800 dark:bg-amber-950/20">
+        <div className="glass-card border-blue-600/70 bg-blue-50/50 p-5 transition-shadow hover:shadow-lg dark:border-blue-300 dark:bg-blue-950/20">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground font-medium">Today&apos;s Expense</p>
-              <p className="text-xl font-bold mt-1 text-primary">₹{(Number(stats.todayExpense) || 0).toLocaleString('en-IN')}</p>
+              <p className="text-xl font-bold mt-1 text-blue-600 dark:text-blue-300">₹{(Number(stats.todayExpense) || 0).toLocaleString('en-IN')}</p>
             </div>
-            <div className="w-12 h-12 rounded-[5px] bg-primary/10 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-primary" />
+            <div className="w-12 h-12 rounded-[5px] bg-blue-500/10 dark:bg-blue-400/10 flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-300" />
             </div>
           </div>
         </div>
@@ -297,36 +284,32 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {pieData.length > 0 && pieData[0].name !== 'No Data' ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={90}
-                    paddingAngle={2}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    labelLine={false}
-                  >
-                    {pieData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke="transparent" />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '5px' }}
-                    formatter={(value: number) => [`₹${Number(value).toLocaleString('en-IN')}`, '']}
-                  />
-                  <Legend wrapperStyle={{ fontSize: '12px' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">
-                No data available for {selectedYear}
-              </div>
-            )}
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={revenueExpenseData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="revenueLine" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#0ea5e9" />
+                    <stop offset="100%" stopColor="#14b8a6" />
+                  </linearGradient>
+                  <linearGradient id="expenseLine" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#f43f5e" />
+                    <stop offset="100%" stopColor="#f97316" />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="4 4" stroke="hsl(var(--border))" opacity={0.45} vertical={false} />
+                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} width={48} tickFormatter={(value) => `₹${Number(value) >= 1000 ? `${(Number(value) / 1000).toFixed(0)}k` : value}`} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', boxShadow: '0 10px 25px -12px rgba(15, 23, 42, 0.35)' }}
+                  labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: 4 }}
+                  formatter={(value: number, name: string) => [`₹${Number(value).toLocaleString('en-IN')}`, name === 'revenue' ? 'Revenue' : 'Expenses']}
+                  cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeDasharray: '4 4' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} formatter={(value) => value === 'revenue' ? 'Revenue' : 'Expenses'} />
+                <Line type="monotone" dataKey="revenue" stroke="url(#revenueLine)" strokeWidth={3} dot={{ r: 3, fill: '#0ea5e9', strokeWidth: 0 }} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} />
+                <Line type="monotone" dataKey="expenses" stroke="url(#expenseLine)" strokeWidth={3} dot={{ r: 3, fill: '#f43f5e', strokeWidth: 0 }} activeDot={{ r: 6, stroke: '#fff', strokeWidth: 2 }} />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </div>
       </div>

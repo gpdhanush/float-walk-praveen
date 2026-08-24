@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '../components/ui/sonner';
 import { Eye, EyeOff, Store, Lock, Upload } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ImageCropDialog } from '@/components/shared/ImageCropDialog';
@@ -206,34 +206,10 @@ export default function SettingsNew() {
               </div>
             </CardHeader>
             <form id="store-details-form" onSubmit={(event) => { event.preventDefault(); void handleSaveStore(); }}>
-            <CardContent className="space-y-7 p-6">
-              <section className="space-y-3">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Account access</p>
-                  <p className="text-xs text-muted-foreground">These details are linked to the signed-in account.</p>
-                </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="space-y-2 rounded-[5px] border border-border bg-muted/25 p-3">
-                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Email</Label>
-                    <p className="truncate text-sm font-medium text-foreground">{user?.email || 'Not available'}</p>
-                    <p className="text-xs text-muted-foreground">Login email cannot be changed here.</p>
-                  </div>
-                  <div className="space-y-2 rounded-[5px] border border-border bg-muted/25 p-3">
-                    <Label className="text-xs uppercase tracking-wide text-muted-foreground">Role</Label>
-                    <p className="text-sm font-medium capitalize text-foreground">{user?.role || 'Not available'}</p>
-                    <p className="text-xs text-muted-foreground">Permissions are managed by your account.</p>
-                  </div>
-                </div>
-              </section>
-
-              <section className="space-y-4 border-t border-border/70 pt-6">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Store identity</p>
-                  <p className="text-xs text-muted-foreground">Shown on invoices, receipts, and customer documents.</p>
-                </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <CardContent className="space-y-6 p-6">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Store Name <span className="text-destructive">*</span></Label>
+                  <Label className="font-semibold">Store Name <span className="text-destructive">*</span></Label>
                   <Input 
                     value={storeForm.storeName} 
                     onChange={e => { setStoreForm({ ...storeForm, storeName: e.target.value }); setStoreErrors(errors => ({ ...errors, storeName: '' })); }}
@@ -244,7 +220,7 @@ export default function SettingsNew() {
                   {storeErrors.storeName && <p className="text-xs text-destructive">{storeErrors.storeName}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label>Owner Name / Full Name <span className="text-destructive">*</span></Label>
+                  <Label className="font-semibold">Owner Name / Full Name <span className="text-destructive">*</span></Label>
                   <Input 
                     value={storeForm.ownerName} 
                     onChange={e => { setStoreForm({ ...storeForm, ownerName: e.target.value }); setStoreErrors(errors => ({ ...errors, ownerName: '' })); }}
@@ -254,29 +230,15 @@ export default function SettingsNew() {
                   />
                   {storeErrors.ownerName && <p className="text-xs text-destructive">{storeErrors.ownerName}</p>}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Address <span className="text-destructive">*</span></Label>
-                <Textarea
-                  value={storeForm.address} 
-                  onChange={e => { setStoreForm({ ...storeForm, address: e.target.value }); setStoreErrors(errors => ({ ...errors, address: '' })); }}
-                  placeholder="Enter store address"
-                  className="min-h-20 resize-y bg-transparent"
-                  aria-invalid={!!storeErrors.address}
-                />
-                {storeErrors.address && <p className="text-xs text-destructive">{storeErrors.address}</p>}
-              </div>
-              </section>
-
-              <section className="space-y-4 border-t border-border/70 pt-6">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Contact and tax details</p>
-                  <p className="text-xs text-muted-foreground">Keep customer contact and tax information current.</p>
-                </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Mobile <span className="text-destructive">*</span></Label>
+                  <Label className="font-semibold">Email</Label>
+                  <Input value={user?.email || ''} disabled className="bg-muted/50" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                <div className="space-y-2">
+                  <Label className="font-semibold">Mobile <span className="text-destructive">*</span></Label>
                   <Input 
                     value={storeForm.mobile}
                     maxLength={10}
@@ -289,7 +251,7 @@ export default function SettingsNew() {
                   {storeErrors.mobile && <p className="text-xs text-destructive">{storeErrors.mobile}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label>Office Mobile Number</Label>
+                  <Label className="font-semibold">Office Mobile Number</Label>
                   <Input 
                     value={storeForm.officeMobile}
                     maxLength={10}
@@ -301,16 +263,13 @@ export default function SettingsNew() {
                   />
                   {storeErrors.officeMobile && <p className="text-xs text-destructive">{storeErrors.officeMobile}</p>}
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Default GST %</Label>
+                  <Label className="font-semibold">Default GST %</Label>
                   <Select 
-                    value={String(storeForm.gstPercent)} 
+                    value={Number.isFinite(Number(storeForm.gstPercent)) ? String(Number(storeForm.gstPercent)) : ''} 
                     onValueChange={(v) => setStoreForm({ ...storeForm, gstPercent: Number(v) })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-transparent">
                       <SelectValue placeholder="Select GST %" />
                     </SelectTrigger>
                     <SelectContent>
@@ -322,7 +281,7 @@ export default function SettingsNew() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>GST Number</Label>
+                  <Label className="font-semibold">GST Number</Label>
                   <Input 
                     value={storeForm.gstNumber}
                     placeholder="Enter GST number"
@@ -331,58 +290,45 @@ export default function SettingsNew() {
                   />
                 </div>
               </div>
-              </section>
-
-              <section className="space-y-4 border-t border-border/70 pt-6">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">Store branding</p>
-                  <p className="text-xs text-muted-foreground">Upload the logo used on printed invoices.</p>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="font-semibold">Address <span className="text-destructive">*</span></Label>
+                  <Textarea
+                    value={storeForm.address}
+                    onChange={e => { setStoreForm({ ...storeForm, address: e.target.value }); setStoreErrors(errors => ({ ...errors, address: '' })); }}
+                    placeholder="Enter store address"
+                    className="min-h-20 resize-y bg-transparent"
+                    aria-invalid={!!storeErrors.address}
+                  />
+                  {storeErrors.address && <p className="text-xs text-destructive">{storeErrors.address}</p>}
                 </div>
-              <div className="space-y-2">
-                <Label>Store Logo</Label>
-                <div className="flex items-center gap-4">
-                  {storeForm.logoUrl && !logoError ? (
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700">
-                      <img 
-                        src={getLogoUrl(storeForm.logoUrl) || storeForm.logoUrl} 
-                        alt="Logo Preview" 
-                        className="w-full h-full object-cover"
-                        onError={() => setLogoError(true)}
-                      />
+                <div className="space-y-2">
+                  <Label className="font-semibold">Store Logo</Label>
+                  <div className="flex items-center gap-4">
+                    {storeForm.logoUrl && !logoError ? (
+                      <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full border-2 border-gray-200 dark:border-gray-700">
+                        <img src={getLogoUrl(storeForm.logoUrl) || storeForm.logoUrl} alt="Logo Preview" className="h-full w-full object-cover" onError={() => setLogoError(true)} />
+                      </div>
+                    ) : storeForm.logoUrl && logoError ? (
+                      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-2 border-gray-200 bg-primary dark:border-gray-700">
+                        <span className="text-3xl font-bold text-primary-foreground">{storeForm.storeName?.charAt(0)?.toUpperCase() || 'S'}</span>
+                      </div>
+                    ) : (
+                      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-800">
+                        <Upload className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Input type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleFileSelect} className="cursor-pointer bg-transparent" />
                     </div>
-                  ) : storeForm.logoUrl && logoError ? (
-                    <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center border-2 border-gray-200 dark:border-gray-700">
-                      <span className="text-3xl font-bold text-primary-foreground">
-                        {storeForm.storeName?.charAt(0)?.toUpperCase() || 'S'}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
-                      <Upload className="w-8 h-8 text-gray-400" />
-                    </div>
-                  )}
-                  <div className="flex-1 space-y-2">
-                    <Input 
-                      type="file" 
-                      accept="image/jpeg,image/jpg,image/png,image/webp" 
-                      onChange={handleFileSelect}
-                      className="cursor-pointer bg-transparent"
-                    />
+                    {storeForm.logoUrl && (
+                      <Button type="button" variant="outline" size="sm" onClick={() => setRemoveLogoOpen(true)} className="rounded-[5px] border-red-600 text-red-600 hover:bg-red-600 hover:text-white">
+                        Remove
+                      </Button>
+                    )}
                   </div>
-                  {storeForm.logoUrl && (
-                    <Button 
-                      type="button"
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setRemoveLogoOpen(true)}
-                      className="rounded-[5px] border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-                    >
-                      Remove
-                    </Button>
-                  )}
                 </div>
               </div>
-              </section>
 
             </CardContent>
             <CardFooter className="justify-end border-t border-border/70 pt-4">

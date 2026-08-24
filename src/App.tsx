@@ -7,7 +7,7 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { useDataStore } from "@/stores/dataStore";
 import { useEffect, useRef, startTransition, lazy, Suspense } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { ApiLoader } from "@/components/ApiLoader";
+import { ApiLoader, ConcentricRingsLoader } from "@/components/ApiLoader";
 import Login from "@/pages/Login";
 import { PerformanceMonitor } from "@/utils/performanceMonitor";
 import { applyThemeColor } from "@/lib/themeColors";
@@ -87,7 +87,7 @@ function AppContent() {
   if (!isAuthenticated) return <Login />;
 
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-white/20 dark:bg-slate-950/20"><ConcentricRingsLoader text="Loading..." /></div>}>
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />

@@ -44,7 +44,7 @@ export const useSettingsStore = create<SettingsState>()(
       officePhone: "",
       taxNumber: "",
       theme: "light",
-      themeColor: "blue",
+      themeColor: "blue500",
       language: "en",
       isLoaded: false,
 
@@ -78,11 +78,11 @@ export const useSettingsStore = create<SettingsState>()(
             taxNumber: (data as any).taxNumber || "",
             mobile: data.phone || "",
             email: data.email || "",
-            gstPercent: data.gstPercent ?? 18,
+            gstPercent: Number(data.gstPercent ?? (data as any).gst_percent ?? 18),
             gstNumber: data.gstNumber || "",
             logoUrl: data.logoUrl || "",
             theme: data.theme || "light",
-            themeColor: data.themeColor || "blue",
+            themeColor: data.themeColor && data.themeColor in (await import("@/lib/themeColors")).themeColors ? data.themeColor : "blue500",
             language: data.language || "en",
             isLoaded: true,
           });
@@ -96,7 +96,7 @@ export const useSettingsStore = create<SettingsState>()(
 
           // Apply theme color
           const { applyThemeColor } = await import("@/lib/themeColors");
-          applyThemeColor(data.themeColor || "blue", data.theme || "light");
+          applyThemeColor(data.themeColor || "blue500", data.theme || "light");
         } catch (error: any) {
           console.error("Failed to fetch settings:", error);
           console.error("Error details:", error?.message || error);
@@ -139,11 +139,11 @@ export const useSettingsStore = create<SettingsState>()(
             taxNumber: (data as any).taxNumber || "",
             mobile: data.phone || "",
             email: data.email || "",
-            gstPercent: data.gstPercent ?? 18,
+            gstPercent: Number(data.gstPercent ?? (data as any).gst_percent ?? 18),
             gstNumber: data.gstNumber || "",
             logoUrl: data.logoUrl || "",
             theme: data.theme || "light",
-            themeColor: data.themeColor || "blue",
+            themeColor: data.themeColor && data.themeColor in (await import("@/lib/themeColors")).themeColors ? data.themeColor : "blue500",
             language: data.language || "en",
           });
 

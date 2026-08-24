@@ -36,7 +36,14 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
   const balanceDueFromApi = Number(inv.balanceDue ?? NaN);
   const balanceDue =
     Number.isFinite(balanceDueFromApi) ? balanceDueFromApi : amountDue;
-  const isPaid = inv.status === "paid";
+  const displayStatus = inv.status || (
+    advancePaid > 0 && balanceDue > 0
+      ? "partial"
+      : balanceDue <= 0 && grandTotal > 0
+        ? "paid"
+        : "pending"
+  );
+  const isPaid = displayStatus === "paid";
   // If marked as paid, treat the remaining as "final payment" to make due = 0.
   const finalPayment = isPaid ? Math.max(0, grandTotal - advancePaid) : 0;
   const dueDisplay = isPaid ? 0 : balanceDue;
@@ -47,13 +54,13 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
   const fullLogoUrl = getLogoUrl(settings.logoUrl);
 
   const statusBadgeClass =
-    inv.status === "paid"
+    displayStatus === "paid"
       ? "bg-green-100 text-green-700"
-      : inv.status === "pending"
+      : displayStatus === "pending"
         ? "bg-red-100 text-red-700"
-        : inv.status === "partial"
+        : displayStatus === "partial"
           ? "bg-yellow-100 text-yellow-700"
-          : inv.status === "hold"
+          : displayStatus === "hold"
             ? "bg-gray-100 text-gray-600"
             : "bg-gray-100 text-gray-600";
 
@@ -148,21 +155,17 @@ export function InvoicePrintContent({ invoice }: { invoice: Invoice }) {
                 <div
                   className={`text-[14px] px-3 py-1 rounded-full inline-block font-bold uppercase mt-2 ${statusBadgeClass}`}
                 >
-                  {inv.status}
+                  {displayStatus}
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bill To / Quotation For / Advance For */}
+        {/* Bill To / Advance For */}
         <div className="mb-6 border border-primary/15 bg-primary/[0.04] p-4 rounded-[5px]">
           <p className="text-xs text-muted-foreground mb-2 font-bold uppercase tracking-wider">
-            {inv.type === "Quotation"
-              ? "QUOTATION FOR"
-              : inv.type === "Advance Payment"
-                ? "ADVANCE PAYMENT FOR"
-                : "BILL TO"}
+            {inv.type === "Advance Payment" ? "ADVANCE PAYMENT FOR" : "BILL TO"}
           </p>
           <p className="font-semibold text-sm">{inv.customerName}</p>
           <p className="text-xs text-muted-foreground">{inv.customerMobile}</p>

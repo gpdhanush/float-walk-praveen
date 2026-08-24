@@ -4,7 +4,7 @@ import { t } from '@/lib/i18n';
 import { DataTable } from '@/components/shared/DataTable';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '../components/ui/sonner';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
@@ -56,6 +56,7 @@ export default function Customers() {
         searchKeys={['name', 'mobile', 'address']}
         exportFileName="customers"
         defaultSortKey="name"
+        fontSize={18}
         actions={(c: Customer) => (
           <div className="flex justify-center gap-1">
             <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>

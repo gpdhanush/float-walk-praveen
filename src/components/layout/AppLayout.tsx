@@ -9,8 +9,8 @@ export function AppLayout() {
   return (
     <div className="app-shell min-h-screen bg-background">
       <SimpleSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
-      <div className={sidebarCollapsed ? 'ml-20' : 'ml-64'}>
-        <AppHeader />
+      <div className={sidebarCollapsed ? 'ml-24' : 'ml-72'}>
+        <AppHeader collapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed((value) => !value)} />
         <main className="p-6">
           <Outlet />
         </main>

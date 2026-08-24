@@ -14,6 +14,7 @@ export interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
@@ -24,14 +25,15 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       login: async (email, password) => {
         try {
           const res = await api.post('/auth/login', { email, password });
           if (res.success && res.data) {
-             const { user, accessToken } = res.data;
+             const { user, accessToken, refreshToken } = res.data;
              const normalizedUser = { ...user, role: user.role.toLowerCase() };
-             set({ user: normalizedUser, token: accessToken, isAuthenticated: true });
+             set({ user: normalizedUser, token: accessToken, refreshToken, isAuthenticated: true });
              
              // Wait for localStorage to sync
              await new Promise(resolve => setTimeout(resolve, 50));
@@ -43,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
           return false;
         }
       },
-      logout: () => set({ user: null, token: null, isAuthenticated: false }),
+      logout: () => set({ user: null, token: null, refreshToken: null, isAuthenticated: false }),
     }),
     { name: 'auth-store' }
   )

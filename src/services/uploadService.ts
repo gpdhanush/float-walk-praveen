@@ -1,4 +1,5 @@
 import { api } from './api';
+import { useLoadingStore } from '@/stores/loadingStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -15,6 +16,8 @@ export const uploadService = {
    * @returns The URL path to access the uploaded file
    */
   uploadLogo: async (file: Blob, filename: string = 'logo.jpg'): Promise<string> => {
+    const { startRequest, finishRequest } = useLoadingStore.getState();
+    startRequest();
     try {
       const formData = new FormData();
       formData.append('logo', file, filename);
@@ -51,9 +54,14 @@ export const uploadService = {
     } catch (error: any) {
       console.error('[uploadService] Upload error:', error);
       throw error;
+    } finally {
+      finishRequest();
     }
   },
   uploadGallery: async (file: Blob, filename: string = 'gallery.jpg'): Promise<{ url: string; size: number }> => {
+    const { startRequest, finishRequest } = useLoadingStore.getState();
+    startRequest();
+    try {
     const formData = new FormData();
     formData.append('gallery', file, filename);
     const response = await fetch(`${API_URL}/upload/gallery`, {
@@ -67,6 +75,9 @@ export const uploadService = {
     }
     const result = await response.json();
     return result.data;
+    } finally {
+      finishRequest();
+    }
   },
 };
 

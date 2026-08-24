@@ -8,7 +8,7 @@ export interface Invoice extends BaseEntity {
   customerId: string;
   customerName?: string;
   status: InvoiceStatus;
-  type?: string; // Invoice, Quotation, Advance Payment
+  type?: 'Invoice' | 'Advance Payment';
   totalAmount: number;
   subtotal?: number;
   gstPercent?: number;
