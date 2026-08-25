@@ -1,0 +1,326 @@
+{
+  "info": {
+    "_postman_id": "5b6e6a1f-7f0c-4b8c-8b31-0c2f3d7a1a01",
+    "name": "Float Walk API - Google Business Profile",
+    "description": "Login and connect/select a Google Business Profile location. Set the collection variables before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.floatwalktiruppur.in/api"
+    },
+    {
+      "key": "adminEmail",
+      "value": ""
+    },
+    {
+      "key": "adminPassword",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "accountId",
+      "value": ""
+    },
+    {
+      "key": "locationId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Login succeeded', function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+              "});",
+              "var json = pm.response.json();",
+              "if (json.data && json.data.accessToken) {",
+              "  pm.collectionVariables.set('accessToken', json.data.accessToken);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Google Authorization URL",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/google/auth/url",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "google",
+            "auth",
+            "url"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Authorization URL returned', function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+              "});",
+              "var json = pm.response.json();",
+              "if (json.data && json.data.url) {",
+              "  console.log('Open this URL in a browser:', json.data.url);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Google Connection Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/google/connection/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "google",
+            "connection",
+            "status"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. List Google Accounts",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/google/accounts",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "google",
+            "accounts"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Accounts returned', function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+              "});",
+              "var json = pm.response.json();",
+              "var account = json.data && json.data[0];",
+              "if (account && account.name) {",
+              "  pm.collectionVariables.set('accountId', account.name.replace(/^accounts\\//, ''));",
+              "  console.log('Selected account:', account.name);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. List Google Locations",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/google/accounts/{{accountId}}/locations",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "google",
+            "accounts",
+            "{{accountId}}",
+            "locations"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Locations returned', function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200]);",
+              "});",
+              "var json = pm.response.json();",
+              "var location = json.data && json.data[0];",
+              "if (location && location.name) {",
+              "  pm.collectionVariables.set('locationId', location.name.replace(/^locations\\//, ''));",
+              "  console.log('Selected location:', location.name, location.title || '');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Select Google Location",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"account_id\": \"accounts/{{accountId}}\",\n  \"location_id\": \"locations/{{locationId}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/google/select-location",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "google",
+            "select-location"
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. Verify Selected Location",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{accessToken}}",
+              "type": "string"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/admin/google/connection/status",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "google",
+            "connection",
+            "status"
+          ]
+        }
+      }
+    }
+  ]
+}

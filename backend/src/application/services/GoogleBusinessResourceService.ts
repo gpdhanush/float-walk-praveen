@@ -1,6 +1,7 @@
 import { GoogleBusinessAuthService } from './GoogleBusinessAuthService.js';
 import { GoogleBusinessConnectionRepository } from '../../infrastructure/db/repositories/GoogleBusinessConnectionRepository.js';
 import { AppError, ErrorCodes } from '../../utils/errors.js';
+import { logger } from '../../utils/logger.js';
 
 export class GoogleBusinessResourceService {
   constructor(private readonly auth: GoogleBusinessAuthService, private readonly connections: GoogleBusinessConnectionRepository) {}
@@ -8,7 +9,16 @@ export class GoogleBusinessResourceService {
   private async get<T>(url: string): Promise<T> {
     const { token } = await this.auth.getAccessToken();
     const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    if (!response.ok) throw new AppError(ErrorCodes.INTERNAL_ERROR, `Google Business request failed (${response.status})`, response.status === 429 ? 429 : 502);
+    if (!response.ok) {
+      const body = await response.text();
+      logger.error('Google Business API request failed', {
+        status: response.status,
+        retryAfter: response.headers.get('retry-after'),
+        body,
+        url,
+      });
+      throw new AppError(ErrorCodes.INTERNAL_ERROR, `Google Business request failed (${response.status})`, response.status === 429 ? 429 : 502);
+    }
     return response.json() as Promise<T>;
   }
 
