@@ -2,6 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Arimo';
+  src: url('/fonts/arimo/Arimo-Regular.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Arimo';
+  src: url('/fonts/arimo/Arimo-Medium.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Arimo';
+  src: url('/fonts/arimo/Arimo-SemiBold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Arimo';
+  src: url('/fonts/arimo/Arimo-Bold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Arimo';
+  src: url('/fonts/arimo/Arimo-Italic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Arimo';
+  src: url('/fonts/arimo/Arimo-MediumItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Arimo';
+  src: url('/fonts/arimo/Arimo-SemiBoldItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Arimo';
+  src: url('/fonts/arimo/Arimo-BoldItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     --background: 220 20% 97%;
@@ -109,10 +173,10 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
-    font-family: 'Avenir Next', 'Helvetica Neue', sans-serif;
+    font-family: 'Arimo', sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Avenir Next', 'Helvetica Neue', sans-serif;
+    font-family: 'Arimo', sans-serif;
   }
 }
 
@@ -121,7 +185,7 @@
 }
 
 .sidebar-sora {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Arimo', sans-serif;
 }
 
 /* Glassmorphism Styles */
