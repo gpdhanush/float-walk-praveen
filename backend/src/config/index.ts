@@ -1,6 +1,9 @@
 import { config as loadEnv } from 'dotenv';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
-loadEnv();
+const backendRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
+loadEnv({ path: join(backendRoot, '.env') });
 
 export const config = {
   env: process.env.NODE_ENV ?? "development",

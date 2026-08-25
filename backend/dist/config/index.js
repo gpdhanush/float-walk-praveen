@@ -1,5 +1,8 @@
 import { config as loadEnv } from 'dotenv';
-loadEnv();
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+const backendRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
+loadEnv({ path: join(backendRoot, '.env') });
 export const config = {
     env: process.env.NODE_ENV ?? "development",
     port: parseInt(process.env.PORT ?? "3001", 10),
