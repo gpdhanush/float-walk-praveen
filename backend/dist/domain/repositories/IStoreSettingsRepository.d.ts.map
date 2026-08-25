@@ -1,1 +1,0 @@
-{"version":3,"file":"IStoreSettingsRepository.d.ts","sourceRoot":"","sources":["../../../src/domain/repositories/IStoreSettingsRepository.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,8BAA8B,CAAC;AAElE,MAAM,WAAW,wBAAwB;IACvC,GAAG,IAAI,OAAO,CAAC,aAAa,GAAG,IAAI,CAAC,CAAC;IACrC,MAAM,CAAC,IAAI,EAAE,OAAO,CAAC,aAAa,CAAC,GAAG,OAAO,CAAC,aAAa,CAAC,CAAC;CAC9D"}

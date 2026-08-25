@@ -1,1 +1,0 @@
-{"version":3,"file":"Expense.d.ts","sourceRoot":"","sources":["../../../src/domain/entities/Expense.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,UAAU,EAAE,MAAM,iBAAiB,CAAC;AAElD,MAAM,WAAW,OAAQ,SAAQ,UAAU;IACzC,IAAI,EAAE,MAAM,CAAC;IACb,QAAQ,EAAE,MAAM,CAAC;IACjB,MAAM,EAAE,MAAM,CAAC;IACf,WAAW,EAAE,MAAM,GAAG,IAAI,CAAC;IAC3B,WAAW,EAAE,IAAI,CAAC;CACnB"}
