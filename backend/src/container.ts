@@ -20,6 +20,14 @@ import { AnalyticsRepository } from './infrastructure/db/repositories/AnalyticsR
 import { WebAdminRepository } from './infrastructure/db/repositories/WebAdminRepository.js';
 import { WebBusinessSettingsRepository } from './infrastructure/db/repositories/WebBusinessSettingsRepository.js';
 import { GoogleBusinessService } from './infrastructure/google/GoogleBusinessService.js';
+import { GoogleBusinessConnectionRepository } from './infrastructure/db/repositories/GoogleBusinessConnectionRepository.js';
+import { TestimonialRepository } from './infrastructure/db/repositories/TestimonialRepository.js';
+import { GoogleBusinessAuthService } from './application/services/GoogleBusinessAuthService.js';
+import { GoogleBusinessResourceService } from './application/services/GoogleBusinessResourceService.js';
+import { GoogleReviewSyncService } from './application/services/GoogleReviewSyncService.js';
+import { GoogleBusinessController } from './interfaces/controllers/GoogleBusinessController.js';
+import { TestimonialController } from './interfaces/controllers/TestimonialController.js';
+import { GoogleReviewSyncJob } from './jobs/GoogleReviewSyncJob.js';
 
 const userRepo = new UserRepository();
 const customerRepo = new CustomerRepository();
@@ -32,6 +40,8 @@ const analyticsRepo = new AnalyticsRepository();
 export const webAdminRepository = new WebAdminRepository();
 export const webBusinessSettingsRepository = new WebBusinessSettingsRepository();
 export const googleBusinessService = new GoogleBusinessService();
+export const googleConnectionRepository = new GoogleBusinessConnectionRepository();
+export const testimonialRepository = new TestimonialRepository();
 
 export const authService = new AuthService(userRepo);
 export const codeGenerator = new CodeGeneratorService(codeSequenceRepo);
@@ -49,3 +59,9 @@ export const productUseCases = new ProductUseCases(productRepo);
 export const reportUseCases = new ReportUseCases();
 export const storeSettingsUseCases = new StoreSettingsUseCases(storeSettingsRepo);
 export const analyticsUseCases = new AnalyticsUseCases(analyticsService);
+export const googleAuthService = new GoogleBusinessAuthService(googleConnectionRepository);
+export const googleResourceService = new GoogleBusinessResourceService(googleAuthService, googleConnectionRepository);
+export const googleReviewSyncService = new GoogleReviewSyncService(googleAuthService, googleConnectionRepository, testimonialRepository);
+export const googleBusinessController = new GoogleBusinessController(googleAuthService, googleResourceService, googleReviewSyncService);
+export const testimonialController = new TestimonialController(testimonialRepository);
+export const googleReviewSyncJob = new GoogleReviewSyncJob(googleReviewSyncService);

@@ -322,6 +322,7 @@ export class AnalyticsService {
     data: {
       total_views: number;
       unique_visitors: number;
+      today_views?: number;
       last_30_days_views?: number;
       current_year_views?: number;
     };
@@ -332,6 +333,9 @@ export class AnalyticsService {
         data: {
           total_views: 0,
           unique_visitors: 0,
+          today_views: 0,
+          last_30_days_views: 0,
+          current_year_views: 0,
         },
       };
     }

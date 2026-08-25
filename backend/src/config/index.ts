@@ -43,6 +43,9 @@ export const config = {
       "",
     refreshToken: process.env.GOOGLE_REFRESH_TOKEN ?? "",
     locationId: process.env.GOOGLE_BUSINESS_LOCATION_ID ?? "",
+    syncEnabled: process.env.GOOGLE_BUSINESS_SYNC_ENABLED === "true",
+    tokenEncryptionKey: process.env.GOOGLE_TOKEN_ENCRYPTION_KEY ?? "",
+    syncIntervalMs: parseInt(process.env.GOOGLE_BUSINESS_SYNC_INTERVAL_MS ?? `${6 * 60 * 60 * 1000}`, 10),
   },
   log: {
     level: process.env.LOG_LEVEL ?? "info",

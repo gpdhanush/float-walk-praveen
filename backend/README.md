@@ -49,6 +49,15 @@ Required variables:
 - `MYSQL_*` – MySQL connection
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` (min 32 chars in production)
 - `CORS_ORIGINS` – Comma-separated allowed origins
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` – Google OAuth credentials
+- `GOOGLE_TOKEN_ENCRYPTION_KEY` – base64-encoded 32-byte key for OAuth token encryption
+- `GOOGLE_BUSINESS_SYNC_ENABLED=true` – enable six-hour review synchronization
+
+Generate an encryption key with:
+
+```bash
+openssl rand -base64 32
+```
 
 ### Database
 
@@ -93,6 +102,15 @@ npm run dev
 - `POST /api/auth/refresh` – Refresh tokens (body or cookie)
 
 Send access token: `Authorization: Bearer <accessToken>`.
+
+### Google Business Profile reviews
+
+Google review management is available only to admin users through `/api/admin/google/*` and `/api/admin/google-reviews/sync`.
+The OAuth callback is `/api/admin/google/auth/callback`; it is protected by a short-lived server-side OAuth state value.
+Public websites should use `GET /api/testimonials?page=1&limit=10` and never call Google APIs directly.
+
+After configuring the environment, run `npm run migrate`, then use `GET /api/admin/google/auth/url` to connect Google,
+select an account and location, and call the sync endpoint. OAuth tokens are encrypted in the backend and are never returned.
 
 ### Human-readable codes
 

@@ -14,6 +14,8 @@ import { webPublicRoutes } from './webPublic.routes.js';
 import { createAnalyticsRoutes } from './analytics.routes.js';
 import { AnalyticsController } from '../controllers/AnalyticsController.js';
 import { authService, analyticsUseCases } from '../../container.js';
+import { googleBusinessRoutes } from './googleBusiness.routes.js';
+import { testimonialRoutes } from './testimonial.routes.js';
 
 export const routes = Router();
 
@@ -30,3 +32,5 @@ routes.use('/web', webPublicRoutes);
 routes.use('/web-admin', webAdminRoutes);
 routes.use('/web-settings', webBusinessSettingsRoutes);
 routes.use('/analytics', createAnalyticsRoutes(new AnalyticsController(analyticsUseCases), authService));
+routes.use('/admin', googleBusinessRoutes);
+routes.use('/testimonials', testimonialRoutes);

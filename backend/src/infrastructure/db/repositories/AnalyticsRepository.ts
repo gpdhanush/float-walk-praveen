@@ -20,6 +20,7 @@ export interface AnalyticsPageData {
 export interface PublicCountResult {
   total_views: number;
   unique_visitors: number;
+  today_views: number;
   last_30_days_views: number;
   current_year_views: number;
 }
@@ -134,6 +135,12 @@ export class AnalyticsRepository {
 
     const result = rows[0] || { total_views: 0, unique_visitors: 0 };
 
+    const todayRows = await selectRows<{ total_views: number }>(
+      `SELECT SUM(total_views) as total_views FROM page_daily_analytics
+       WHERE analytics_date = ?`,
+      [today.toISOString().split('T')[0]]
+    );
+
     // Get 30-day and year totals for inclusion in response
     const last30Rows = await selectRows<{ total_views: number }>(
       `SELECT SUM(total_views) as total_views FROM page_daily_analytics 
@@ -150,6 +157,7 @@ export class AnalyticsRepository {
     return {
       total_views: result.total_views || 0,
       unique_visitors: result.unique_visitors || 0,
+      today_views: todayRows[0]?.total_views || 0,
       last_30_days_views: last30Rows[0]?.total_views || 0,
       current_year_views: yearRows[0]?.total_views || 0,
     };

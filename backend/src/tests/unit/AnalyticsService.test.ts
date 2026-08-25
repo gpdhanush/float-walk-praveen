@@ -12,15 +12,16 @@ describe('AnalyticsService', () => {
   beforeEach(() => {
     // Mock the repository
     mockRepository = {
-      recordPageView: jest.fn().mockResolvedValue(undefined),
-      checkAndRecordDedup: jest.fn().mockResolvedValue(true),
-      getPublicCount: jest.fn().mockResolvedValue({
+      recordPageView: jest.fn<AnalyticsRepository['recordPageView']>().mockResolvedValue(undefined),
+      checkAndRecordDedup: jest.fn<AnalyticsRepository['checkAndRecordDedup']>().mockResolvedValue(true),
+      getPublicCount: jest.fn<AnalyticsRepository['getPublicCount']>().mockResolvedValue({
         total_views: 1000,
         unique_visitors: 500,
+        today_views: 25,
         last_30_days_views: 200,
         current_year_views: 800,
       }),
-      getPageViewsByDateRange: jest.fn().mockResolvedValue({
+      getPageViewsByDateRange: jest.fn<AnalyticsRepository['getPageViewsByDateRange']>().mockResolvedValue({
         summary: {
           total_views: 100,
           unique_visitors: 50,
@@ -37,10 +38,10 @@ describe('AnalyticsService', () => {
           },
         ],
       }),
-      getCachedData: jest.fn().mockResolvedValue(null),
-      setCachedData: jest.fn().mockResolvedValue(undefined),
-      cleanupExpiredDedup: jest.fn().mockResolvedValue(0),
-      cleanupExpiredCache: jest.fn().mockResolvedValue(0),
+      getCachedData: jest.fn<AnalyticsRepository['getCachedData']>().mockResolvedValue(null),
+      setCachedData: jest.fn<AnalyticsRepository['setCachedData']>().mockResolvedValue(undefined),
+      cleanupExpiredDedup: jest.fn<AnalyticsRepository['cleanupExpiredDedup']>().mockResolvedValue(0),
+      cleanupExpiredCache: jest.fn<AnalyticsRepository['cleanupExpiredCache']>().mockResolvedValue(0),
     } as any;
 
     service = new AnalyticsService(mockRepository);
@@ -338,6 +339,7 @@ describe('AnalyticsService', () => {
       mockRepository.getPublicCount.mockResolvedValueOnce({
         total_views: 1000,
         unique_visitors: 500,
+        today_views: 25,
         last_30_days_views: 200,
         current_year_views: 800,
       });
@@ -347,6 +349,7 @@ describe('AnalyticsService', () => {
       expect(result.success).toBe(true);
       expect(result.data.total_views).toBe(1000);
       expect(result.data.unique_visitors).toBe(500);
+      expect(result.data.today_views).toBe(25);
     });
 
     it('18. Unauthenticated access to public count', async () => {
