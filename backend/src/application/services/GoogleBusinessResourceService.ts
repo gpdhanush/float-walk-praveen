@@ -3,6 +3,19 @@ import { GoogleBusinessConnectionRepository } from '../../infrastructure/db/repo
 import { AppError, ErrorCodes } from '../../utils/errors.js';
 import { logger } from '../../utils/logger.js';
 
+function googleErrorSummary(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as {
+      error?: { status?: string; message?: string; details?: Array<{ reason?: string }> };
+    };
+    const error = parsed.error;
+    const reason = error?.details?.find((detail) => detail.reason)?.reason;
+    return [error?.status, reason, error?.message].filter(Boolean).join(': ') || 'Unknown Google error';
+  } catch {
+    return 'Unparseable Google error response';
+  }
+}
+
 export class GoogleBusinessResourceService {
   constructor(private readonly auth: GoogleBusinessAuthService, private readonly connections: GoogleBusinessConnectionRepository) {}
 
@@ -19,7 +32,8 @@ export class GoogleBusinessResourceService {
         body,
         url,
       });
-      throw new AppError(ErrorCodes.INTERNAL_ERROR, `Google Business request failed (${response.status})`, response.status === 429 ? 429 : 502);
+      const summary = googleErrorSummary(body);
+      throw new AppError(ErrorCodes.INTERNAL_ERROR, `Google Business request failed (${response.status}): ${summary}`, response.status === 429 ? 429 : 502);
     }
     logger.info('Google Business API request succeeded', { status: response.status, url });
     return response.json() as Promise<T>;
