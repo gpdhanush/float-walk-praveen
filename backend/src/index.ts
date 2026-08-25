@@ -10,7 +10,7 @@ async function main() {
 
   app.listen(config.port, () => {
     logger.info(`Server listening on port ${config.port} (${config.env})`);
-    logger.info(`API docs: http://localhost:${config.port}/api-docs`);
+    logger.info(`API docs: ${config.apiBaseUrl || `:${config.port}`}/api-docs`);
   });
 }
 

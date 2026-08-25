@@ -2,11 +2,13 @@ import multer from 'multer';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import { mkdir } from 'fs/promises';
+import { fileURLToPath } from 'url';
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(process.cwd(), 'uploads', 'logos');
+const backendRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const uploadsDir = path.join(backendRoot, 'uploads', 'logos');
 mkdir(uploadsDir, { recursive: true }).catch(console.error);
-const galleryUploadsDir = path.join(process.cwd(), 'uploads', 'gallery');
+const galleryUploadsDir = path.join(backendRoot, 'uploads', 'gallery');
 mkdir(galleryUploadsDir, { recursive: true }).catch(console.error);
 
 // Configure storage

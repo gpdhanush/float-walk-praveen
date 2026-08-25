@@ -9,7 +9,7 @@ const options = {
             version: '1.0.0',
             description: 'Enterprise Retail Footwear Billing SaaS - REST API',
         },
-        servers: [{ url: `http://localhost:${config.port}/api`, description: 'Development' }],
+        servers: config.apiBaseUrl ? [{ url: `${config.apiBaseUrl}/api`, description: 'Configured API' }] : [],
         components: {
             securitySchemes: {
                 bearerAuth: {

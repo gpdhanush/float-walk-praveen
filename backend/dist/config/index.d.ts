@@ -1,6 +1,7 @@
 export declare const config: {
     readonly env: string;
     readonly port: number;
+    readonly apiBaseUrl: string;
     readonly mysql: {
         readonly host: string;
         readonly port: number;

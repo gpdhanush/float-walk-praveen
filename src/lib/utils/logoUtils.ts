@@ -21,7 +21,7 @@ export function getLogoUrl(logoUrl: string | null | undefined): string | null {
   }
   
   // Construct full URL from backend URL + relative path
-  const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  const backendUrl = import.meta.env.VITE_API_URL;
   const baseUrl = backendUrl.replace('/api', '');
   
   // Ensure the path starts with /

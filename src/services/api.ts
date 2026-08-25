@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/stores/authStore';
 import { useLoadingStore } from '@/stores/loadingStore';
 
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+export const API_URL = import.meta.env.VITE_API_URL;
 
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (value?: any) => void; reject: (reason?: any) => void }> = [];

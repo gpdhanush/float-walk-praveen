@@ -5,6 +5,7 @@ loadEnv();
 export const config = {
   env: process.env.NODE_ENV ?? "development",
   port: parseInt(process.env.PORT ?? "3001", 10),
+  apiBaseUrl: process.env.API_BASE_URL ?? "",
   mysql: {
     host: process.env.MYSQL_HOST ?? "localhost",
     port: parseInt(process.env.MYSQL_PORT ?? "3306", 10),
@@ -15,18 +16,15 @@ export const config = {
   jwt: {
     accessSecret:
       process.env.JWT_ACCESS_SECRET ??
-      "default_access_secret_change_in_production",
+      "",
     refreshSecret:
       process.env.JWT_REFRESH_SECRET ??
-      "default_refresh_secret_change_in_production",
+      "",
     accessExpiry: process.env.JWT_ACCESS_EXPIRY ?? "15m",
     refreshExpiry: process.env.JWT_REFRESH_EXPIRY ?? "7d",
   },
   cors: {
-    origins: (
-      process.env.CORS_ORIGINS ??
-      "http://localhost:5173,http://localhost:8080,http://localhost:8081,http://localhost:8082,https://floatwalktiruppur.in,https://admin.floatwalktiruppur.in,https://api.floatwalktiruppur.in,http://localhost:3000,http://localhost:4001,http://localhost:8080,http://localhost:8081,http://localhost:8082,https://floatwalktiruppur.in"
-    )
+    origins: (process.env.CORS_ORIGINS ?? "")
       .split(",")
       .map((origin) => origin.trim().replace(/\/$/, ""))
       .filter(Boolean),
@@ -39,7 +37,7 @@ export const config = {
     clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
     redirectUri:
       process.env.GOOGLE_REDIRECT_URI ??
-      `http://localhost:${process.env.PORT ?? "3001"}/auth/google/callback`,
+      "",
     refreshToken: process.env.GOOGLE_REFRESH_TOKEN ?? "",
     locationId: process.env.GOOGLE_BUSINESS_LOCATION_ID ?? "",
   },

@@ -4,6 +4,7 @@ import cors from 'cors';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { config } from './config/index.js';
 import { routes } from './interfaces/routes/index.js';
 import { errorHandler } from './interfaces/middlewares/errorHandler.js';
@@ -12,6 +13,7 @@ import { setupSwagger } from './config/swagger.js';
 import { googleRoutes } from './interfaces/routes/google.routes.js';
 export function createApp() {
     const app = express();
+    const backendRoot = path.dirname(fileURLToPath(import.meta.url));
     app.use(helmet({
         contentSecurityPolicy: false,
         crossOriginResourcePolicy: false, // Allow images to be loaded from frontend
@@ -29,7 +31,7 @@ export function createApp() {
         res.header('Access-Control-Allow-Origin', '*');
         res.header('Cross-Origin-Resource-Policy', 'cross-origin');
         next();
-    }, express.static(path.join(process.cwd(), 'uploads')));
+    }, express.static(path.join(backendRoot, '..', 'uploads')));
     app.use(requestLogger);
     app.get('/health', (_req, res) => {
         res.json({ status: 'ok', timestamp: new Date().toISOString() });
