@@ -172,7 +172,9 @@ export default function SettingsNew() {
     try {
       // Upload the cropped image to backend
       const uploadedUrl = await uploadService.uploadLogo(croppedBlob, 'logo.jpg');
-      setStoreForm({ ...storeForm, logoUrl: uploadedUrl });
+      setLogoError(false);
+      setStoreForm((current) => ({ ...current, logoUrl: uploadedUrl }));
+      await settings.updateSettings({ logoUrl: uploadedUrl });
       toast.success('Logo uploaded successfully');
     } catch (error: any) {
       console.error('Failed to upload logo:', error);
