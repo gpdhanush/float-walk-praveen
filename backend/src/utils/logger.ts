@@ -18,19 +18,16 @@ export const logger = winston.createLogger({
   transports: [
     new winston.transports.File({ filename: join(logsDirectory, 'error.log'), level: 'error' }),
     new winston.transports.File({ filename: join(logsDirectory, 'combined.log') }),
+    new winston.transports.Console(),
   ],
 });
 
 if (config.env !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.printf(({ level, message, timestamp, ...meta }) => {
-          const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
-          return `${timestamp} [${level}] ${message} ${metaStr}`;
-        })
-      ),
+  logger.transports[2].format = winston.format.combine(
+    winston.format.colorize(),
+    winston.format.printf(({ level, message, timestamp, ...meta }) => {
+      const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
+      return `${timestamp} [${level}] ${message} ${metaStr}`;
     })
   );
 }

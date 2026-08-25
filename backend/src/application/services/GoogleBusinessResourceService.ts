@@ -7,7 +7,9 @@ export class GoogleBusinessResourceService {
   constructor(private readonly auth: GoogleBusinessAuthService, private readonly connections: GoogleBusinessConnectionRepository) {}
 
   private async get<T>(url: string): Promise<T> {
+    logger.info('Google Business API request started', { url });
     const { token } = await this.auth.getAccessToken();
+    logger.info('Google Business access token obtained');
     const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!response.ok) {
       const body = await response.text();
@@ -19,6 +21,7 @@ export class GoogleBusinessResourceService {
       });
       throw new AppError(ErrorCodes.INTERNAL_ERROR, `Google Business request failed (${response.status})`, response.status === 429 ? 429 : 502);
     }
+    logger.info('Google Business API request succeeded', { status: response.status, url });
     return response.json() as Promise<T>;
   }
 
@@ -30,12 +33,14 @@ export class GoogleBusinessResourceService {
 
   async accounts(): Promise<unknown[]> {
     const data = await this.get<{ accounts?: unknown[] }>('https://mybusinessaccountmanagement.googleapis.com/v1/accounts');
+    logger.info('Google Business accounts loaded', { count: data.accounts?.length ?? 0 });
     return data.accounts ?? [];
   }
 
   async locations(accountId: string): Promise<unknown[]> {
     const account = this.resourceId(accountId, 'accounts');
     const data = await this.get<{ locations?: unknown[] }>(`https://mybusinessbusinessinformation.googleapis.com/v1/${account}/locations?readMask=name,title,storefrontAddress`);
+    logger.info('Google Business locations loaded', { account, count: data.locations?.length ?? 0 });
     return data.locations ?? [];
   }
 
@@ -45,5 +50,6 @@ export class GoogleBusinessResourceService {
     const connection = await this.connections.getActive();
     if (!connection) throw new AppError(ErrorCodes.BAD_REQUEST, 'Google Business Profile is not connected', 400);
     await this.connections.selectLocation(account, location);
+    logger.info('Google Business location selected', { account, location });
   }
 }
