@@ -30,7 +30,7 @@ export const webResourceDefinitions: Record<WebResource, ResourceDefinition> = {
   testimonials: {
     table: 'web_customer_testimonials',
     primaryKey: 'id',
-    columns: ['customer_name', 'rating', 'testimonial', 'service', 'review_date', 'is_published'],
+    columns: ['source', 'google_review_id', 'google_location_id', 'google_reviewer_name', 'customer_name', 'rating', 'testimonial', 'service', 'review_date', 'is_published'],
     orderBy: 'created_at DESC',
   },
   gallery: {

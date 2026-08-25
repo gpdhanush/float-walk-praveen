@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `prasowla_floatwalk_billing`
+-- Database: `floatwal_billing`
 --
 
 -- --------------------------------------------------------
@@ -633,7 +633,11 @@ CREATE TABLE `web_customer_appointments` (
 --
 
 CREATE TABLE `web_customer_testimonials` (
-  `id` bigint(20) UNSIGNED NOT NULL,
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `source` varchar(30) NOT NULL DEFAULT 'manual',
+  `google_review_id` varchar(500) DEFAULT NULL,
+  `google_location_id` varchar(255) DEFAULT NULL,
+  `google_reviewer_name` varchar(150) DEFAULT NULL,
   `customer_name` varchar(150) NOT NULL,
   `rating` tinyint(3) UNSIGNED NOT NULL DEFAULT 5,
   `testimonial` text NOT NULL,
@@ -641,7 +645,9 @@ CREATE TABLE `web_customer_testimonials` (
   `review_date` date DEFAULT NULL,
   `is_published` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_google_review_id` (`google_review_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -796,7 +802,7 @@ ALTER TABLE `web_customer_appointments`
 -- Indexes for table `web_customer_testimonials`
 --
 ALTER TABLE `web_customer_testimonials`
-  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_source` (`source`),
   ADD KEY `idx_rating` (`rating`),
   ADD KEY `idx_published` (`is_published`),
   ADD KEY `idx_review_date` (`review_date`);
