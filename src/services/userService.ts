@@ -43,9 +43,7 @@ export interface ChangePasswordDTO {
 export const userService = {
   getProfile: async (): Promise<UserProfile> => {
     try {
-      console.log("Calling GET /users/profile...");
       const response = await api.get("/users/profile");
-      console.log("Profile response:", response);
 
       // Handle both { data: {...} } and direct {...} response formats
       const profileData = response?.data || response;
@@ -58,9 +56,7 @@ export const userService = {
 
   updateProfile: async (data: UpdateProfileDTO): Promise<UserProfile> => {
     try {
-      console.log("Calling PATCH /users/profile with data:", data);
       const response = await api.patch("/users/profile", data);
-      console.log("Update profile response:", response);
 
       const profileData = response?.data || response;
       return profileData as UserProfile;

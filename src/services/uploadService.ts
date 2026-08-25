@@ -23,9 +23,6 @@ export const uploadService = {
       formData.append('logo', file, filename);
 
       const token = getAuthToken();
-      console.log('[uploadService] Uploading logo, size:', `${(file.size / 1024).toFixed(0)}KB`);
-      console.log('[uploadService] Auth token exists:', !!token);
-      console.log('[uploadService] Upload URL:', `${API_URL}/upload/logo`);
 
       const response = await fetch(`${API_URL}/upload/logo`, {
         method: 'POST',
@@ -35,8 +32,6 @@ export const uploadService = {
         body: formData,
       });
 
-      console.log('[uploadService] Response status:', response.status);
-
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
         console.error('[uploadService] Upload failed:', error);
@@ -45,8 +40,6 @@ export const uploadService = {
 
       const result = await response.json();
       const logoUrl = result.data?.url || result.url;
-      
-      console.log('[uploadService] Upload successful, relative URL:', logoUrl);
       
       // Return just the relative path (e.g., /uploads/logos/xxx.jpg)
       // This will be saved to database and works regardless of domain

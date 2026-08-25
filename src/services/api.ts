@@ -54,13 +54,8 @@ const getHeaders = () => {
     'Content-Type': 'application/json',
   };
   const authData = getAuthData();
-  console.log('[API] Getting headers, auth data:', authData ? 'Found' : 'Not found');
-  console.log('[API] Token exists:', !!authData?.token);
   if (authData?.token) {
     headers['Authorization'] = `Bearer ${authData.token}`;
-    console.log('[API] Authorization header added');
-  } else {
-    console.warn('[API] No token available for request!');
   }
   return headers;
 };
@@ -107,19 +102,15 @@ async function handleResponse(response: Response, retryFn?: () => Promise<Respon
     // Token might be expired, try to refresh
     if (!isRefreshing) {
       isRefreshing = true;
-      console.log('[API] 401 Unauthorized. Attempting token refresh...');
-      
       try {
         const newToken = await refreshAccessToken();
         
         if (newToken) {
-          console.log('[API] Token refreshed. Retrying request...');
           processQueue();
           isRefreshing = false;
           const retryResponse = await retryFn();
           return handleResponse(retryResponse);
         } else {
-          console.error('[API] Token refresh failed. Logging out...');
           processQueue(new Error('Token refresh failed'));
           isRefreshing = false;
           // Use store logout for clean state cleanup
@@ -166,7 +157,6 @@ async function request(makeRequest: () => Promise<Response>): Promise<any> {
 
 export const api = {
   get: async (endpoint: string) => {
-    console.log(`[API] GET ${endpoint}`);
       const makeRequest = () => fetch(`${API_URL}${endpoint}`, { headers: getHeaders() });
       return request(makeRequest);
   },
@@ -187,7 +177,6 @@ export const api = {
       return request(makeRequest);
   },
   patch: async (endpoint: string, data: any) => {
-    console.log(`[API] PATCH ${endpoint}`, data);
     const makeRequest = () => fetch(`${API_URL}${endpoint}`, {
       method: 'PATCH',
       headers: getHeaders(),
